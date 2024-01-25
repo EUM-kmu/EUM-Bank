@@ -1,5 +1,6 @@
 package com.eum.bank.domain.account.entity;
 
+import com.eum.bank.domain.base.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -11,7 +12,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Account {
+public class Account extends BaseEntity {
 
     // 계좌 번호
     @Id
@@ -29,5 +30,4 @@ public class Account {
     // 계좌 사용 가능 잔액
     @Column(name = "available_budget", nullable = false)
     private Long availableBudget;
-
 }

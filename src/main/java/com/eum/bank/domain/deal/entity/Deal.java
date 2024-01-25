@@ -1,6 +1,7 @@
 package com.eum.bank.domain.deal.entity;
 
 import com.eum.bank.domain.account.entity.Account;
+import com.eum.bank.domain.base.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -10,7 +11,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Deal {
+public class Deal extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

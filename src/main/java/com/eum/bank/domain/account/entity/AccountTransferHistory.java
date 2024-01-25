@@ -1,5 +1,6 @@
 package com.eum.bank.domain.account.entity;
 
+import com.eum.bank.domain.base.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -9,7 +10,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AccountTransferHistory {
+public class AccountTransferHistory extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
