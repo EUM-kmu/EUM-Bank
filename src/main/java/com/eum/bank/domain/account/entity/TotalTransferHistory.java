@@ -18,12 +18,12 @@ public class TotalTransferHistory extends BaseEntity {
 
     // 송신자 계좌
     @ManyToOne
-    @JoinColumn(name = "account_number")
+    @JoinColumn(name = "sender_account_number")
     private Account senderAccount;
 
     // 수신자 계좌
     @ManyToOne
-    @JoinColumn(name = "account_number")
+    @JoinColumn(name = "receiver_account_number")
     private Account receiverAccount;
 
     // 거래 금액
