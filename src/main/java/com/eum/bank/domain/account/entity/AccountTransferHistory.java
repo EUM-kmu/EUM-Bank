@@ -18,12 +18,12 @@ public class AccountTransferHistory extends BaseEntity {
 
     // 주인 계좌
     @ManyToOne
-    @JoinColumn(name = "account_number")
+    @JoinColumn(name = "owner_account_number")
     private Account ownerAccount;
 
     // 상대 계좌
     @ManyToOne
-    @JoinColumn(name = "account_number")
+    @JoinColumn(name = "oppenent_account_number")
     private Account oppenentAccount;
 
     // 거래 금액
