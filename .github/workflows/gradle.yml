@@ -41,8 +41,6 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
     - name: Build with Gradle
-      run: ./gradlew build
-
-    - name: Test with Gradle
-      run: ./gradlew test
-
+      uses: eskatos/gradle-command-action@v1
+      with:
+        args: build test
