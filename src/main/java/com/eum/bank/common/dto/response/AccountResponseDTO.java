@@ -1,5 +1,6 @@
 package com.eum.bank.common.dto.response;
 
+import com.eum.bank.domain.account.entity.Account;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,5 +21,14 @@ public class AccountResponseDTO {
         private String accountNumber;
         private Long totalBudget;
         private Long availableBudget;
+
+        // fromEntity
+        public static AccountInfo fromEntity(Account account) {
+            return AccountInfo.builder()
+                    .accountNumber(account.getAccountNumber())
+                    .totalBudget(account.getTotalBudget())
+                    .availableBudget(account.getAvailableBudget())
+                    .build();
+        }
     }
 }
