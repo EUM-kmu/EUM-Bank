@@ -1,7 +1,9 @@
 package com.eum.bank.service;
 
 import com.eum.bank.common.APIResponse;
+import com.eum.bank.common.ErrorResponse;
 import com.eum.bank.common.dto.response.AccountResponseDTO;
+import com.eum.bank.common.enums.ErrorCode;
 import com.eum.bank.common.enums.SuccessCode;
 import com.eum.bank.domain.account.entity.Account;
 import com.eum.bank.repository.AccountRepository;
@@ -68,6 +70,21 @@ public class AccountService {
             return false;
         }
         return true;
+    }
+
+    // 계좌번호와 비밀번호로 계좌 조회
+    public APIResponse<AccountResponseDTO.AccountInfo> getAccount(String accountNumber, String password) {
+        Account account = accountRepository.findByAccountNumber(accountNumber).orElseThrow(() -> new IllegalArgumentException("Invalid account number"));
+
+        // 비밀번호 검증
+        if (!passwordEncoder.matches(password, account.getPassword())) {
+            throw new IllegalArgumentException("Invalid password");
+        }
+        return APIResponse.of(SuccessCode.SELECT_SUCCESS, AccountResponseDTO.AccountInfo.builder()
+                .accountNumber(account.getAccountNumber())
+                .totalBudget(account.getTotalBudget())
+                .availableBudget(account.getAvailableBudget())
+                .build());
     }
 
 
