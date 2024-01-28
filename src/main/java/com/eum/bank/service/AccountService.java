@@ -8,6 +8,7 @@ import com.eum.bank.repository.AccountRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Random;
 
 @Service
@@ -15,6 +16,8 @@ import java.util.Random;
 public class AccountService {
 
     private final AccountRepository accountRepository;
+    private final PasswordEncoder passwordEncoder;
+
 
     public APIResponse<?> createAccount(Long password) {
 
@@ -27,7 +30,7 @@ public class AccountService {
 
         Account account = Account.builder()
                 .accountNumber(accountNumber)
-                .password(password.toString())
+                .password(passwordEncoder.encode(password.toString()))
                 .totalBudget(0L)
                 .availableBudget(0L)
                 .build();
@@ -66,6 +69,7 @@ public class AccountService {
         }
         return true;
     }
+
 
 
 }
