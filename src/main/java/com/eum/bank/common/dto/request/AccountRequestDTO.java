@@ -10,4 +10,13 @@ public class AccountRequestDTO {
         @NotEmpty(message = "비밀번호를 입력해주세요.")
         private Long password;
     }
+
+    // 계좌 조회 요청
+    @Getter
+    public static class GetAccount {
+        @NotEmpty(message = "계좌 번호를 입력해주세요.")
+        private String accountNumber;
+        @NotEmpty(message = "비밀번호를 입력해주세요.")
+        private String password;
+    }
 }
