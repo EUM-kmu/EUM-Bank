@@ -28,14 +28,13 @@ public class AccountService {
     private final TotalTransferHistoryService totalTransferHistoryService;
 
 
-
     public APIResponse<?> createAccount(Long password) {
 
         String accountNumber;
         do {
             accountNumber = generateAccountNumber();
         }while (
-                validateAccountNumber(accountNumber)
+                !validateAccountNumber(accountNumber)
         );
 
         Account account = Account.builder()
@@ -61,22 +60,20 @@ public class AccountService {
             uniqueNumber.append(digit);
         }
 
-        if( validateAccountNumber(uniqueNumber.toString()) )
-            generateAccountNumber();
-
         return uniqueNumber.toString();
     }
+
     public Boolean validateAccountNumber(String accountNumber) {
         if (accountNumber.length() != 12) {
             return false;
         }
 
-        try {
-            Long.parseLong(accountNumber);
-            accountRepository.findByAccountNumber(accountNumber);
-        } catch (NumberFormatException e) {
+        // 계좌번호 중복 검증
+        //  - 계좌번호가 중복되면 false
+        if (accountRepository.findByAccountNumber(accountNumber).isPresent()) {
             return false;
         }
+
         return true;
     }
 
