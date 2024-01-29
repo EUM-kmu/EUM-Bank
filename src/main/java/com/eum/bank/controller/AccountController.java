@@ -20,7 +20,7 @@ public class AccountController {
     @PostMapping("/create")
     public ResponseEntity<?> create(@RequestBody AccountRequestDTO.CreateAccount createAccount) {
 
-        Long password = createAccount.getPassword();
+        String password = createAccount.getPassword();
         APIResponse<?> response = accountService.createAccount(password);
 
         return ResponseEntity.ok(response);

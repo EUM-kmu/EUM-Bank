@@ -28,7 +28,7 @@ public class AccountService {
     private final TotalTransferHistoryService totalTransferHistoryService;
 
 
-    public APIResponse<?> createAccount(Long password) {
+    public APIResponse<?> createAccount(String password) {
 
         String accountNumber;
         do {
@@ -39,7 +39,7 @@ public class AccountService {
 
         Account account = Account.builder()
                 .accountNumber(accountNumber)
-                .password(passwordEncoder.encode(password.toString()))
+                .password(passwordEncoder.encode(password))
                 .totalBudget(0L)
                 .availableBudget(0L)
                 .build();

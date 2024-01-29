@@ -8,7 +8,7 @@ public class AccountRequestDTO {
     @Getter
     public static class CreateAccount {
         @NotEmpty(message = "비밀번호를 입력해주세요.")
-        private Long password;
+        private String password;
     }
 
     // 계좌 조회 요청
