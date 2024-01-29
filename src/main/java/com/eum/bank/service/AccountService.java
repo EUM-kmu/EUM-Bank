@@ -42,6 +42,7 @@ public class AccountService {
                 .password(passwordEncoder.encode(password))
                 .totalBudget(0L)
                 .availableBudget(0L)
+                .isBlocked(false)
                 .build();
 
         accountRepository.save(account);
@@ -77,9 +78,18 @@ public class AccountService {
         return true;
     }
 
+    // 계좌 검증 (계좌 존재여부 + 블락 여부)
+    public Account validateAccount(String accountNumber) {
+        Account account = accountRepository.findByAccountNumber(accountNumber).orElseThrow(() -> new IllegalArgumentException("Invalid account number : " + accountNumber));
+        if(account.getIsBlocked()){
+            throw new IllegalArgumentException("Blocked account : " + accountNumber);
+        }
+        return account;
+    }
+
     // 계좌번호와 비밀번호로 계좌 조회
     public APIResponse<AccountResponseDTO.AccountInfo> getAccount(String accountNumber, String password) {
-        Account account = accountRepository.findByAccountNumber(accountNumber).orElseThrow(() -> new IllegalArgumentException("Invalid account number"));
+        Account account = this.validateAccount(accountNumber);
 
         // 비밀번호 검증
         if (!passwordEncoder.matches(password, account.getPassword())) {
@@ -100,8 +110,8 @@ public class AccountService {
     //  5. 통합 거래내역 생성, 각 계좌 거래내역 생성
     @Transactional
     public APIResponse<?> transfer(String senderAccountNumber, String receiverAccountNumber, Long amount, String password, String transferType) {
-        Account senderAccount = accountRepository.findByAccountNumber(senderAccountNumber).orElseThrow(() -> new IllegalArgumentException("Invalid account number"));
-        Account receiverAccount = accountRepository.findByAccountNumber(receiverAccountNumber).orElseThrow(() -> new IllegalArgumentException("Invalid account number"));
+        Account senderAccount = this.validateAccount(senderAccountNumber);
+        Account receiverAccount = this.validateAccount(receiverAccountNumber);
 
         // 비밀번호 검증
         if (!passwordEncoder.matches(password, senderAccount.getPassword())) {
