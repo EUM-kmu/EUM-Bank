@@ -9,6 +9,7 @@ import com.eum.bank.domain.deal.entity.DealReceiver;
 import com.eum.bank.repository.DealReceiverRepository;
 import com.eum.bank.repository.DealRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,7 @@ public class DealService {
     private final DealRepository dealRepository;
     private final AccountService accountService;
     private final DealReceiverRepository dealReceiverRepository;
+    private final PasswordEncoder passwordEncoder;
 
 
     // 거래 성사
@@ -45,6 +47,7 @@ public class DealService {
             throw new IllegalArgumentException("잔액이 부족합니다.");
         }
         senderAccount.setAvailableBudget(senderAccount.getAvailableBudget() - finalDeposit);
+        deal.setDeposit(dto.getDeposit());
 
         // 수신자 계좌번호 검증하면서 DealReceiver로 만들어서 저장
         for (String receiverAccountNumber : receiverAccountNumbers) {
@@ -72,5 +75,51 @@ public class DealService {
         }
 
         return deal;
+    }
+
+    // 거래 수정
+    //    1. 거래 ID 확인
+    //    2. 송금자 계좌 검증
+    //    3. 비밀번호 검증
+    //    4. 거래 상태 확인
+    //    5. 예치금 수정 및 송신자 계좌에 가용금액 플러스
+    //    6. 거래 인원수 수정
+    //    7. b일 경우 dealReceiver 삭제
+    //    8. 거래 상태 a로 변경
+    //    9. 거래ID 반환
+    @Transactional
+    public APIResponse<Long> updateDeal(DealRequestDTO.updateDeal dto) {
+        // 거래ID로 존재여부 + 거래상태 검증
+        Deal deal = this.validateDeal(dto.getDealId(), List.of("a", "b"));
+
+        // 송금자 계좌 검증
+        Account senderAccount = accountService.validateAccount(dto.getSenderAccountNumber());
+
+        // 비밀번호 검증
+        if (!passwordEncoder.matches(dto.getPassword(), senderAccount.getPassword())) {
+            throw new IllegalArgumentException("비밀번호가 올바르지 않습니다.");
+        }
+
+        // 거래 상태 확인
+        if (deal.getStatus().equals("b")) {
+            // 거래 상태가 b일 경우 dealReceiver 삭제
+            dealReceiverRepository.deleteByDeal(deal);
+        }
+
+        // 예치금 수정 및 송신자 계좌에 가용금액 마이너스
+        Long finalDeposit = dto.getDeposit() - deal.getDeposit();
+        if (senderAccount.getAvailableBudget() < finalDeposit) {
+            throw new IllegalArgumentException("잔액이 부족합니다.");
+        }
+        senderAccount.setAvailableBudget(senderAccount.getAvailableBudget() - finalDeposit);
+        deal.setDeposit(dto.getDeposit());
+
+        // 거래 인원수 수정
+        deal.setNumberOfPeople(dto.getNumberOfPeople());
+
+        // 거래 상태 a로 변경
+        deal.setStatus("a");
+
+        return APIResponse.of(SuccessCode.UPDATE_SUCCESS, dealRepository.save(deal).getId());
     }
 }
