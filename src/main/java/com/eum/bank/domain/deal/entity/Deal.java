@@ -23,6 +23,10 @@ public class Deal extends BaseEntity {
     private Account senderAccount;
 
     // 상태
+    // a: 거래 생성 후 거래 성사 전 (수신계좌가 안엮인 상태)
+    // b: 거래 성사 후 (수신계좌가 엮인 상태)
+    // c: 거래 취소 됨
+    // d: 거래 수행 됨
     @Column(name = "status", nullable = false)
     private String status;
 
