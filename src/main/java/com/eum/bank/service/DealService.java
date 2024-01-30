@@ -122,4 +122,42 @@ public class DealService {
 
         return APIResponse.of(SuccessCode.UPDATE_SUCCESS, dealRepository.save(deal).getId());
     }
+
+    // 거래 취소
+    //    1. 거래 ID 확인
+    //    2. 송금자 계좌 검증
+    //    3. 비밀번호 검증
+    //    4. 거래 상태 확인
+    //    5. 거래 상태 b일 경우 dealReceiver 삭제
+    //    6. 송신자 계좌에 가용금액 플러스
+    //    7. 거래 상태 c로 변경
+    //    8. 거래ID 반환
+    @Transactional
+    public APIResponse<Long> cancelDeal(DealRequestDTO.cancelDeal dto) {
+        // 거래ID로 존재여부 + 거래상태 검증
+        Deal deal = this.validateDeal(dto.getDealId(), List.of("a", "b"));
+
+        // 송금자 계좌 검증
+        Account senderAccount = accountService.validateAccount(dto.getSenderAccountNumber());
+
+        // 비밀번호 검증
+        if (!passwordEncoder.matches(dto.getPassword(), senderAccount.getPassword())) {
+            throw new IllegalArgumentException("비밀번호가 올바르지 않습니다.");
+        }
+
+        // 거래 상태 확인
+        if (deal.getStatus().equals("b")) {
+            // 거래 상태가 b일 경우 dealReceiver 삭제
+            // 근데 삭제해야 하나?
+            dealReceiverRepository.deleteByDeal(deal);
+        }
+
+        // 송신자 계좌에 가용금액 플러스
+        senderAccount.setAvailableBudget(senderAccount.getAvailableBudget() + deal.getDeposit());
+
+        // 거래 상태 c로 변경
+        deal.setStatus("c");
+
+        return APIResponse.of(SuccessCode.DELETE_SUCCESS, dealRepository.save(deal).getId());
+    }
 }
