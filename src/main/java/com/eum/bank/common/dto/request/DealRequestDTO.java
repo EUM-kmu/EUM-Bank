@@ -50,4 +50,17 @@ public class DealRequestDTO {
         @NotEmpty(message = "비밀번호를 입력해주세요.")
         private String password;
     }
+
+    @Getter
+    public static class executeDeal{
+        // 거래ID
+        @NotEmpty(message = "거래ID를 입력해주세요.")
+        private Long dealId;
+        // 송금자 계좌번호
+        @NotEmpty(message = "송금자 계좌번호를 입력해주세요.")
+        private String senderAccountNumber;
+        // 비밀번호
+        @NotEmpty(message = "비밀번호를 입력해주세요.")
+        private String password;
+    }
 }

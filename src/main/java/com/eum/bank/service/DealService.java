@@ -2,8 +2,10 @@ package com.eum.bank.service;
 
 import com.eum.bank.common.APIResponse;
 import com.eum.bank.common.dto.request.DealRequestDTO;
+import com.eum.bank.common.dto.response.TotalTransferHistoryResponseDTO;
 import com.eum.bank.common.enums.SuccessCode;
 import com.eum.bank.domain.account.entity.Account;
+import com.eum.bank.domain.account.entity.TotalTransferHistory;
 import com.eum.bank.domain.deal.entity.Deal;
 import com.eum.bank.domain.deal.entity.DealReceiver;
 import com.eum.bank.repository.DealReceiverRepository;
@@ -159,5 +161,32 @@ public class DealService {
         deal.setStatus("c");
 
         return APIResponse.of(SuccessCode.DELETE_SUCCESS, dealRepository.save(deal).getId());
+    }
+
+    // 거래 수행
+    //    1. 거래 ID 확인
+    //    2. 수신계좌들에 자유송금
+    //    3. 거래 상태 d로 변경
+    //    4. 통합 거래내역리스트 반환
+    @Transactional
+    public APIResponse<List<TotalTransferHistoryResponseDTO.GetTotalTransferHistory>> executeDeal(DealRequestDTO.executeDeal dto) {
+        // 거래ID로 존재여부 + 거래상태 검증
+        Deal deal = this.validateDeal(dto.getDealId(), List.of("b"));
+
+        // 반환할 거래내역 리스트 생성
+        List<TotalTransferHistoryResponseDTO.GetTotalTransferHistory> totalTransferHistoryIds = new java.util.ArrayList<>(List.of());
+
+        // 수신계좌들에 자유송금
+        List<DealReceiver> dealReceivers = dealReceiverRepository.findAllByDeal(deal);
+        for (DealReceiver dealReceiver : dealReceivers) {
+            totalTransferHistoryIds.add(
+                    accountService.transfer(deal.getSenderAccount().getAccountNumber(), dealReceiver.getReceiverAccount().getAccountNumber(), deal.getDeposit(), dto.getPassword(), "b")
+            );
+        }
+
+        // 거래 상태 d로 변경
+        deal.setStatus("d");
+
+        return APIResponse.of(SuccessCode.UPDATE_SUCCESS, totalTransferHistoryIds);
     }
 }
