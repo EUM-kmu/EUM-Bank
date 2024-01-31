@@ -43,6 +43,8 @@ public class AccountController {
         Long deposit = transfer.getDeposit();
         String receiverAccountNumber = transfer.getReceiverAccountNumber();
 
+        accountService.getAccount(accountNumber, password);
+
         APIResponse<?> response = accountService.transfer(
                 accountNumber, receiverAccountNumber, deposit, password, FREE_TYPE
         );
