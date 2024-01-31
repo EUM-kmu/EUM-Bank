@@ -21,6 +21,7 @@ public class AccountResponseDTO {
         private String accountNumber;
         private Long totalBudget;
         private Long availableBudget;
+        private Boolean isBlocked;
 
         // fromEntity
         public static AccountInfo fromEntity(Account account) {
@@ -28,6 +29,7 @@ public class AccountResponseDTO {
                     .accountNumber(account.getAccountNumber())
                     .totalBudget(account.getTotalBudget())
                     .availableBudget(account.getAvailableBudget())
+                    .isBlocked(account.getIsBlocked())
                     .build();
         }
     }

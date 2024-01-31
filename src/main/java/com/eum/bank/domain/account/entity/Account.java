@@ -30,4 +30,8 @@ public class Account extends BaseEntity {
     // 계좌 사용 가능 잔액
     @Column(name = "available_budget", nullable = false)
     private Long availableBudget;
+
+    // 블락 여부
+    @Column(name = "is_blocked", nullable = false)
+    private Boolean isBlocked;
 }
