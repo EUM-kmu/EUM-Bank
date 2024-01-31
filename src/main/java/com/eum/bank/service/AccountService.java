@@ -1,19 +1,17 @@
 package com.eum.bank.service;
 
 import com.eum.bank.common.APIResponse;
-import com.eum.bank.common.ErrorResponse;
 import com.eum.bank.common.dto.request.AccountTransferHistoryRequestDTO;
 import com.eum.bank.common.dto.request.TotalTransferHistoryRequestDTO;
 import com.eum.bank.common.dto.response.AccountResponseDTO;
-import com.eum.bank.common.enums.ErrorCode;
 import com.eum.bank.common.enums.SuccessCode;
 import com.eum.bank.domain.account.entity.Account;
-import com.eum.bank.domain.account.entity.AccountTransferHistory;
 import com.eum.bank.domain.account.entity.TotalTransferHistory;
 import com.eum.bank.repository.AccountRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import static com.eum.bank.common.Constants.ACCOUNT_NUMBER_LENGTH;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Random;
@@ -56,7 +54,7 @@ public class AccountService {
         Random random = new Random();
         StringBuilder uniqueNumber = new StringBuilder();
 
-        for (int i = 0; i < 12; i++) {
+        for (int i = 0; i < ACCOUNT_NUMBER_LENGTH; i++) {
             int digit = random.nextInt(10);
             uniqueNumber.append(digit);
         }
@@ -65,7 +63,7 @@ public class AccountService {
     }
 
     public Boolean validateAccountNumber(String accountNumber) {
-        if (accountNumber.length() != 12) {
+        if (accountNumber.length() != ACCOUNT_NUMBER_LENGTH) {
             return false;
         }
 
