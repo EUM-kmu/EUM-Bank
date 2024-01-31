@@ -85,6 +85,7 @@ public class AccountService {
         if (!passwordEncoder.matches(password, account.getPassword())) {
             throw new IllegalArgumentException("Invalid password");
         }
+
         return APIResponse.of(SuccessCode.SELECT_SUCCESS, AccountResponseDTO.AccountInfo.builder()
                 .accountNumber(account.getAccountNumber())
                 .totalBudget(account.getTotalBudget())
@@ -92,6 +93,9 @@ public class AccountService {
                 .build());
     }
 
+    public Account getAccount(String accountNumber) {
+        return accountRepository.findByAccountNumber(accountNumber).orElseThrow(() -> new IllegalArgumentException("Invalid account number"));
+    }
     // 자유송금
     //  1. 송금자 계좌, 수신자 계좌 상태 검증
     //  2. 송금자 잔액 확인
