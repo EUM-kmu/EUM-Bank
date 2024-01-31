@@ -113,7 +113,7 @@ public class AccountService {
     //  4. 수신자 전체금액, 가용금액 플러스
     //  5. 통합 거래내역 생성, 각 계좌 거래내역 생성
     @Transactional
-    public APIResponse<?> transfer(String senderAccountNumber, String receiverAccountNumber, Long amount, String password, String transferType) {
+    public APIResponse<?> transfer(String senderAccountNumber, String receiverAccountNumber, Long deposit, String password, String transferType) {
         Account senderAccount = this.validateAccount(senderAccountNumber);
         Account receiverAccount = this.validateAccount(receiverAccountNumber);
 
@@ -123,25 +123,25 @@ public class AccountService {
         }
 
         // 송금자 잔액 검증
-        if (senderAccount.getAvailableBudget() < amount) {
+        if (senderAccount.getAvailableBudget() < deposit) {
             throw new IllegalArgumentException("Insufficient balance");
         }
 
         // 송금자 잔액 마이너스
-        senderAccount.setTotalBudget(senderAccount.getTotalBudget() - amount);
-        senderAccount.setAvailableBudget(senderAccount.getAvailableBudget() - amount);
+        senderAccount.setTotalBudget(senderAccount.getTotalBudget() - deposit);
+        senderAccount.setAvailableBudget(senderAccount.getAvailableBudget() - deposit);
 
 
         // 수신자 잔액 플러스
-        receiverAccount.setTotalBudget(receiverAccount.getTotalBudget() + amount);
-        receiverAccount.setAvailableBudget(receiverAccount.getAvailableBudget() + amount);
+        receiverAccount.setTotalBudget(receiverAccount.getTotalBudget() + deposit);
+        receiverAccount.setAvailableBudget(receiverAccount.getAvailableBudget() + deposit);
 
         // 통합 거래내역 생성
         TotalTransferHistory response = totalTransferHistoryService.save(
                 TotalTransferHistoryRequestDTO.CreateTotalTransferHistory.builder()
                         .senderAccount(senderAccount)
                         .receiverAccount(receiverAccount)
-                        .transferAmount(amount)
+                        .transferAmount(deposit)
                         .transferType(transferType)
                         .build()
         );
@@ -151,7 +151,7 @@ public class AccountService {
                 AccountTransferHistoryRequestDTO.CreateAccountTransferHistory.builder()
                         .ownerAccount(senderAccount)
                         .oppenentAccount(receiverAccount)
-                        .transferAmount(amount)
+                        .transferAmount(deposit)
                         .transferType(transferType)
                         .budgetAfterTransfer(senderAccount.getAvailableBudget())
                         .memo("")
@@ -161,7 +161,7 @@ public class AccountService {
                 AccountTransferHistoryRequestDTO.CreateAccountTransferHistory.builder()
                         .ownerAccount(receiverAccount)
                         .oppenentAccount(senderAccount)
-                        .transferAmount(-amount)
+                        .transferAmount(-deposit)
                         .transferType(transferType)
                         .budgetAfterTransfer(receiverAccount.getAvailableBudget())
                         .memo("")

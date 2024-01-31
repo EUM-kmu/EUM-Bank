@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import static com.eum.bank.common.Constants.FREE_TYPE;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/account")
@@ -34,4 +35,18 @@ public class AccountController {
         return ResponseEntity.ok(response);
     }
 
+    // 자유 송금
+    @PostMapping("/transfer")
+    public ResponseEntity<?> transfer(@RequestBody AccountRequestDTO.Transfer transfer) {
+        String accountNumber = transfer.getAccountNumber();
+        String password = transfer.getPassword();
+        Long deposit = transfer.getDeposit();
+        String receiverAccountNumber = transfer.getReceiverAccountNumber();
+
+        APIResponse<?> response = accountService.transfer(
+                accountNumber, receiverAccountNumber, deposit, password, FREE_TYPE
+        );
+
+        return ResponseEntity.ok(response);
+    }
 }
