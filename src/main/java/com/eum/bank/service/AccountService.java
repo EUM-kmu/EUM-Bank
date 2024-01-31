@@ -11,7 +11,7 @@ import com.eum.bank.repository.AccountRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import static com.eum.bank.common.Constants.ACCOUNT_NUMBER_LENGTH;
+import static com.eum.bank.common.PackageInfo.ACCOUNT_NUMBER_LENGTH;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Random;

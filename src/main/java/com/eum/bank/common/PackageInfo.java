@@ -1,8 +1,8 @@
 package com.eum.bank.common;
 
-public final class Constants {
+public final class PackageInfo {
 
-    private Constants() {
+    private PackageInfo() {
     }
 
     public static final int ACCOUNT_NUMBER_LENGTH = 12;
