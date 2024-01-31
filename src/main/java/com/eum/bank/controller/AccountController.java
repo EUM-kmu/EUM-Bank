@@ -10,7 +10,10 @@ import com.eum.bank.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import static com.eum.bank.common.Constant.FREE_TYPE;
 
@@ -20,6 +23,12 @@ import static com.eum.bank.common.Constant.FREE_TYPE;
 @Slf4j
 public class AccountController {
     private final AccountService accountService;
+
+    /**
+     * 계좌 생성
+     * @param createAccount
+     * @return
+     */
     @PostMapping("/create")
     public ResponseEntity<?> create(@RequestBody AccountRequestDTO.CreateAccount createAccount) {
 

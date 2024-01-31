@@ -9,6 +9,7 @@ public final class Constant {
      * 계좌 번호 길이
      */
     public static final int ACCOUNT_NUMBER_LENGTH = 12;
+
     /**
      * 자유 송금 타입
      */
