@@ -129,8 +129,11 @@ public class AccountService {
         }
 
         // 송금자 잔액 마이너스
+        if(transferType.equals("a")){
+            senderAccount.setAvailableBudget(senderAccount.getAvailableBudget() - amount);
+        }
         senderAccount.setTotalBudget(senderAccount.getTotalBudget() - amount);
-        senderAccount.setAvailableBudget(senderAccount.getAvailableBudget() - amount);
+
 
 
         // 수신자 잔액 플러스

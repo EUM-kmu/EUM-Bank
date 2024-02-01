@@ -47,7 +47,7 @@ public class AccountController {
     // 자유 송금
     @PostMapping("/transfer")
     public ResponseEntity<?> transfer(@RequestBody AccountRequestDTO.Transfer transfer) {
-        TotalTransferHistoryResponseDTO.GetTotalTransferHistory response = accountService.transfer(transfer.getAccountNumber(), transfer.getReceiverAccountNumber(), transfer.getAmount(), transfer.getPassword(), FREE_TYPE);
+        TotalTransferHistoryResponseDTO.GetTotalTransferHistory response = accountService.transfer(transfer.getAccountNumber(), transfer.getReceiverAccountNumber(), transfer.getAmount(), transfer.getPassword(), "a");
         return ResponseEntity.ok(APIResponse.of(SuccessCode.INSERT_SUCCESS, response));
     }
 

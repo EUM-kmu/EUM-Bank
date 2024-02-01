@@ -34,9 +34,13 @@ public class Deal extends BaseEntity {
     @Column(name = "deposit", nullable = false)
     private Long deposit;
 
-    // 인원수
-    @Column(name = "number_of_people", nullable = false)
-    private Long numberOfPeople;
+    // 최대 인원수
+    @Column(name = "max_people_num", nullable = false)
+    private Long maxPeopleNum;
+
+    // 실제 모집인원수
+    @Column(name = "real_people_num", nullable = false)
+    private Long realPeopleNum;
 
     // 게시글 ID
     @Column(name = "post_id", nullable = false)
