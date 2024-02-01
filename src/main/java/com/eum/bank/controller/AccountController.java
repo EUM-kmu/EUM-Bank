@@ -2,12 +2,9 @@ package com.eum.bank.controller;
 
 import com.eum.bank.common.APIResponse;
 import com.eum.bank.common.dto.request.AccountRequestDTO;
-import com.eum.bank.common.dto.response.AccountResponseDTO;
-import com.eum.bank.common.enums.SuccessCode;
 import com.eum.bank.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,4 +22,16 @@ public class AccountController {
 
         return ResponseEntity.ok(response);
     }
+
+    // 계좌 조회
+    @PostMapping("/getAccount")
+    public ResponseEntity<?> getAccountInfo(@RequestBody AccountRequestDTO.GetAccount getAccountInfo) {
+        String accountNumber = getAccountInfo.getAccountNumber();
+        String password = getAccountInfo.getPassword();
+
+        APIResponse<?> response = accountService.getAccount(accountNumber, password);
+
+        return ResponseEntity.ok(response);
+    }
+
 }

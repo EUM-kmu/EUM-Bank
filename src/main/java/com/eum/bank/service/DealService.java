@@ -1,6 +1,7 @@
 package com.eum.bank.service;
 
 import com.eum.bank.common.APIResponse;
+
 import com.eum.bank.common.dto.request.DealRequestDTO;
 import com.eum.bank.common.dto.response.TotalTransferHistoryResponseDTO;
 import com.eum.bank.common.enums.SuccessCode;
@@ -27,6 +28,21 @@ public class DealService {
     private final PasswordEncoder passwordEncoder;
 
 
+    // 거래 생성
+    public void createDeal(Account accountNumber, Long deposit, Long maxPeople, Long postId){
+        // 거래 생성
+        // 거래상태 a -> WAITING
+        Deal deal = Deal.builder()
+                .senderAccount(accountNumber)
+                .status("WAITING")
+                .deposit(deposit)
+                .numberOfPeople(maxPeople)
+                .postId(postId)
+                .build();
+
+        dealRepository.save(deal);
+    }
+  
     // 거래 성사
     //    1. 거래상태 a인지 확인
     //    2. 수신계좌들 검증
