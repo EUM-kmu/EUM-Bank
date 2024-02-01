@@ -28,7 +28,6 @@ import java.io.IOException;
 public class GlobalExceptionHandler {
     private final HttpStatus HTTP_STATUS_OK = HttpStatus.OK;
 
-
     /**
      * [Exception] API 호출 시 '객체' 혹은 '파라미터' 데이터 값이 유효하지 않은 경우
      *
@@ -210,7 +209,5 @@ public class GlobalExceptionHandler {
         final ErrorResponse response = ErrorResponse.of(ErrorCode.INTERNAL_SERVER_ERROR, ex.getMessage());
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
-
-
 
 }
