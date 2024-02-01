@@ -30,6 +30,7 @@ public class DealService {
 
 
     // 거래 생성
+    @Transactional
     public APIResponse<?> createDeal(DealRequestDTO.Create create){
         // 거래 생성
         // 거래상태 a
@@ -54,6 +55,12 @@ public class DealService {
                 .build();
 
         dealRepository.save(deal);
+
+        // 송신자 계좌에 가용금액 마이너스
+        if (account.getAvailableBudget() < deposit) {
+            throw new IllegalArgumentException("잔액이 부족합니다.");
+        }
+        account.setAvailableBudget(account.getAvailableBudget() - deposit);
 
         DealResponseDTO.Create response = DealResponseDTO.Create.builder()
                 .dealId(deal.getId())
