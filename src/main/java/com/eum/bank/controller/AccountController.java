@@ -1,3 +1,7 @@
+/**
+ * 계좌 controller
+ */
+
 package com.eum.bank.controller;
 
 import com.eum.bank.common.APIResponse;
@@ -6,7 +10,12 @@ import com.eum.bank.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import static com.eum.bank.common.Constant.FREE_TYPE;
 
 @RestController
 @RequiredArgsConstructor
@@ -14,6 +23,12 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 public class AccountController {
     private final AccountService accountService;
+
+    /**
+     * 계좌 생성
+     * @param createAccount
+     * @return
+     */
     @PostMapping("/create")
     public ResponseEntity<?> create(@RequestBody AccountRequestDTO.CreateAccount createAccount) {
 
@@ -34,4 +49,20 @@ public class AccountController {
         return ResponseEntity.ok(response);
     }
 
+    // 자유 송금
+    @PostMapping("/transfer")
+    public ResponseEntity<?> transfer(@RequestBody AccountRequestDTO.Transfer transfer) {
+        String accountNumber = transfer.getAccountNumber();
+        String password = transfer.getPassword();
+        Long deposit = transfer.getDeposit();
+        String receiverAccountNumber = transfer.getReceiverAccountNumber();
+
+        accountService.getAccount(accountNumber, password);
+
+        APIResponse<?> response = accountService.transfer(
+                accountNumber, receiverAccountNumber, deposit, password, FREE_TYPE
+        );
+
+        return ResponseEntity.ok(response);
+    }
 }

@@ -1,7 +1,6 @@
 package com.eum.bank.service;
 
 import com.eum.bank.common.APIResponse;
-import com.eum.bank.common.ErrorResponse;
 import com.eum.bank.common.dto.request.AccountTransferHistoryRequestDTO;
 import com.eum.bank.common.dto.request.TotalTransferHistoryRequestDTO;
 import com.eum.bank.common.dto.response.AccountResponseDTO;
@@ -9,7 +8,6 @@ import com.eum.bank.common.dto.response.TotalTransferHistoryResponseDTO;
 import com.eum.bank.common.enums.ErrorCode;
 import com.eum.bank.common.enums.SuccessCode;
 import com.eum.bank.domain.account.entity.Account;
-import com.eum.bank.domain.account.entity.AccountTransferHistory;
 import com.eum.bank.domain.account.entity.TotalTransferHistory;
 import com.eum.bank.repository.AccountRepository;
 import jakarta.transaction.Transactional;
@@ -18,6 +16,9 @@ import org.springframework.stereotype.Service;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Random;
+
+import static com.eum.bank.common.Constant.ACCOUNT_NUMBER_LENGTH;
+
 
 @Service
 @RequiredArgsConstructor
@@ -57,7 +58,7 @@ public class AccountService {
         Random random = new Random();
         StringBuilder uniqueNumber = new StringBuilder();
 
-        for (int i = 0; i < 12; i++) {
+        for (int i = 0; i < ACCOUNT_NUMBER_LENGTH; i++) {
             int digit = random.nextInt(10);
             uniqueNumber.append(digit);
         }
@@ -66,7 +67,7 @@ public class AccountService {
     }
 
     public Boolean validateAccountNumber(String accountNumber) {
-        if (accountNumber.length() != 12) {
+        if (accountNumber.length() != ACCOUNT_NUMBER_LENGTH) {
             return false;
         }
 
@@ -124,25 +125,25 @@ public class AccountService {
         }
 
         // 송금자 잔액 검증
-        if (senderAccount.getAvailableBudget() < amount) {
+        if (senderAccount.getAvailableBudget() < deposit) {
             throw new IllegalArgumentException("Insufficient balance");
         }
 
         // 송금자 잔액 마이너스
-        senderAccount.setTotalBudget(senderAccount.getTotalBudget() - amount);
-        senderAccount.setAvailableBudget(senderAccount.getAvailableBudget() - amount);
+        senderAccount.setTotalBudget(senderAccount.getTotalBudget() - deposit);
+        senderAccount.setAvailableBudget(senderAccount.getAvailableBudget() - deposit);
 
 
         // 수신자 잔액 플러스
-        receiverAccount.setTotalBudget(receiverAccount.getTotalBudget() + amount);
-        receiverAccount.setAvailableBudget(receiverAccount.getAvailableBudget() + amount);
+        receiverAccount.setTotalBudget(receiverAccount.getTotalBudget() + deposit);
+        receiverAccount.setAvailableBudget(receiverAccount.getAvailableBudget() + deposit);
 
         // 통합 거래내역 생성
         TotalTransferHistory response = totalTransferHistoryService.save(
                 TotalTransferHistoryRequestDTO.CreateTotalTransferHistory.builder()
                         .senderAccount(senderAccount)
                         .receiverAccount(receiverAccount)
-                        .transferAmount(amount)
+                        .transferAmount(deposit)
                         .transferType(transferType)
                         .build()
         );
@@ -152,7 +153,7 @@ public class AccountService {
                 AccountTransferHistoryRequestDTO.CreateAccountTransferHistory.builder()
                         .ownerAccount(senderAccount)
                         .oppenentAccount(receiverAccount)
-                        .transferAmount(amount)
+                        .transferAmount(deposit)
                         .transferType(transferType)
                         .budgetAfterTransfer(senderAccount.getAvailableBudget())
                         .memo("")
@@ -162,7 +163,7 @@ public class AccountService {
                 AccountTransferHistoryRequestDTO.CreateAccountTransferHistory.builder()
                         .ownerAccount(receiverAccount)
                         .oppenentAccount(senderAccount)
-                        .transferAmount(-amount)
+                        .transferAmount(-deposit)
                         .transferType(transferType)
                         .budgetAfterTransfer(receiverAccount.getAvailableBudget())
                         .memo("")
