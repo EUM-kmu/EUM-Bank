@@ -19,23 +19,8 @@ public class DealController {
 
     @PostMapping("/create")
     public ResponseEntity<?> create(@RequestBody DealRequestDTO.Create create) {
-
-        String accountNumber = create.getAccountNumber();
-        String password = create.getPassword();
-        Long deposit = create.getDeposit();
-        Long maxPeople = create.getMaxPeople();
-        Long postId = create.getPostId();
-
-        APIResponse<?> apiResponse = accountService.getAccount(accountNumber, password);
-
-        Account account = accountService.getAccount(accountNumber);
-
-            // 계좌가 존재하고 비밀번호가 일치하는 경우
-            // 거래 생성
-            dealService.createDeal(account, deposit, maxPeople, postId);
-
-
-        APIResponse<DealResponseDTO.Create> response = new APIResponse<>();
+        APIResponse<?> response = dealService.createDeal(create);
+        
         return ResponseEntity.ok(response);
     }
 
