@@ -3,6 +3,7 @@ package com.eum.bank.service;
 import com.eum.bank.common.APIResponse;
 
 import com.eum.bank.common.dto.request.DealRequestDTO;
+import com.eum.bank.common.dto.response.DealResponseDTO;
 import com.eum.bank.common.dto.response.TotalTransferHistoryResponseDTO;
 import com.eum.bank.common.enums.SuccessCode;
 import com.eum.bank.domain.account.entity.Account;
@@ -29,11 +30,23 @@ public class DealService {
 
 
     // 거래 생성
-    public void createDeal(Account accountNumber, Long deposit, Long maxPeople, Long postId){
+    public APIResponse<?> createDeal(DealRequestDTO.Create create){
         // 거래 생성
         // 거래상태 a -> WAITING
+        String accountNumber = create.getAccountNumber();
+        String password = create.getPassword();
+        Long deposit = create.getDeposit();
+        Long maxPeople = create.getMaxPeople();
+        Long postId = create.getPostId();
+
+        Account account = accountService.validateAccount(accountNumber);
+
+        if (!passwordEncoder.matches(password, account.getPassword())) {
+            throw new IllegalArgumentException("비밀번호가 올바르지 않습니다.");
+        }
+
         Deal deal = Deal.builder()
-                .senderAccount(accountNumber)
+                .senderAccount(account)
                 .status("WAITING")
                 .deposit(deposit)
                 .numberOfPeople(maxPeople)
@@ -41,6 +54,12 @@ public class DealService {
                 .build();
 
         dealRepository.save(deal);
+
+        DealResponseDTO.Create response = DealResponseDTO.Create.builder()
+                .dealId(deal.getId())
+                .build();
+
+        return APIResponse.of(SuccessCode.INSERT_SUCCESS, response);
     }
   
     // 거래 성사

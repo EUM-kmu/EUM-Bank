@@ -10,6 +10,6 @@ public class DealResponseDTO {
     @Builder
     public static class Create {
         // 거래 id
-        private Long id;
+        private Long dealId;
     }
 }
