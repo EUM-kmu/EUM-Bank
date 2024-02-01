@@ -7,7 +7,6 @@ import com.eum.bank.common.dto.response.DealResponseDTO;
 import com.eum.bank.common.dto.response.TotalTransferHistoryResponseDTO;
 import com.eum.bank.common.enums.SuccessCode;
 import com.eum.bank.domain.account.entity.Account;
-import com.eum.bank.domain.account.entity.TotalTransferHistory;
 import com.eum.bank.domain.deal.entity.Deal;
 import com.eum.bank.domain.deal.entity.DealReceiver;
 import com.eum.bank.repository.DealReceiverRepository;
@@ -50,17 +49,19 @@ public class DealService {
                 .senderAccount(account)
                 .status("a")
                 .deposit(deposit)
-                .numberOfPeople(maxPeople)
+                .maxPeopleNum(maxPeople)
+                .realPeopleNum(0L)
                 .postId(postId)
                 .build();
 
         dealRepository.save(deal);
 
         // 송신자 계좌에 가용금액 마이너스
-        if (account.getAvailableBudget() < deposit) {
+        Long finalDeposit = deposit * deal.getMaxPeopleNum();
+        if (account.getAvailableBudget() < finalDeposit) {
             throw new IllegalArgumentException("잔액이 부족합니다.");
         }
-        account.setAvailableBudget(account.getAvailableBudget() - deposit);
+        account.setAvailableBudget(account.getAvailableBudget() - finalDeposit);
 
         DealResponseDTO.Create response = DealResponseDTO.Create.builder()
                 .dealId(deal.getId())
@@ -82,16 +83,17 @@ public class DealService {
         Deal deal = this.validateDeal(dto.getDealId(), List.of("a"));
 
         List<String> receiverAccountNumbers = List.of(dto.getReceiverAccountNumbers());
+        Long realPeopleNum = (long) receiverAccountNumbers.size();
 
         // 송신계좌 검증 및 잔액 확인
-        // 최종 예치금 - 기존 거래의 예치금 만큼 송신자 계좌의 가용금액을 마이너스
         Account senderAccount = accountService.validateAccount(deal.getSenderAccount().getAccountNumber());
-        Long finalDeposit = dto.getDeposit() - deal.getDeposit();
-        if (senderAccount.getAvailableBudget() < finalDeposit) {
-            throw new IllegalArgumentException("잔액이 부족합니다.");
+        if (!passwordEncoder.matches(dto.getPassword(), senderAccount.getPassword())) {
+            throw new IllegalArgumentException("비밀번호가 올바르지 않습니다.");
         }
-        senderAccount.setAvailableBudget(senderAccount.getAvailableBudget() - finalDeposit);
-        deal.setDeposit(dto.getDeposit());
+
+        // 최대 모집인원 - 최종 모집인원 * 예치금 만큼 다시 가용금액 플러스
+        Long diff = deal.getDeposit() * (deal.getMaxPeopleNum() - realPeopleNum);
+        senderAccount.setAvailableBudget(senderAccount.getAvailableBudget() + diff);
 
         // 수신자 계좌번호 검증하면서 DealReceiver로 만들어서 저장
         for (String receiverAccountNumber : receiverAccountNumbers) {
@@ -105,6 +107,7 @@ public class DealService {
 
         // 거래상태 b로 변경
         deal.setStatus("b");
+        deal.setRealPeopleNum(realPeopleNum);
 
         return APIResponse.of(SuccessCode.INSERT_SUCCESS, dealRepository.save(deal).getId());
     }
@@ -144,22 +147,27 @@ public class DealService {
             throw new IllegalArgumentException("비밀번호가 올바르지 않습니다.");
         }
 
-        // 거래 상태 확인
+        // 거래 상태가 B일 경우 실제 지원자수 * 예치금만큼 가용금액 플러스
+        // 거래 상태가 A일 경우 최대 지원자수 * 예치금만큼 가용금액 플러스
         if (deal.getStatus().equals("b")) {
-            // 거래 상태가 b일 경우 dealReceiver 삭제
+            senderAccount.setAvailableBudget(deal.getDeposit() * deal.getRealPeopleNum() + senderAccount.getAvailableBudget());
             dealReceiverRepository.deleteByDeal(deal);
+        }else{
+            senderAccount.setAvailableBudget(deal.getDeposit() * deal.getMaxPeopleNum() + senderAccount.getAvailableBudget());
         }
 
         // 예치금 수정 및 송신자 계좌에 가용금액 마이너스
-        Long finalDeposit = dto.getDeposit() - deal.getDeposit();
+        // 송신자 계좌에 가용금액 마이너스
+        Long finalDeposit = dto.getDeposit() * dto.getNumberOfPeople();
         if (senderAccount.getAvailableBudget() < finalDeposit) {
             throw new IllegalArgumentException("잔액이 부족합니다.");
         }
         senderAccount.setAvailableBudget(senderAccount.getAvailableBudget() - finalDeposit);
-        deal.setDeposit(dto.getDeposit());
 
+        // 예치금 수정
+        deal.setDeposit(dto.getDeposit());
         // 거래 인원수 수정
-        deal.setNumberOfPeople(dto.getNumberOfPeople());
+        deal.setMaxPeopleNum(dto.getNumberOfPeople());
 
         // 거래 상태 a로 변경
         deal.setStatus("a");
@@ -189,15 +197,15 @@ public class DealService {
             throw new IllegalArgumentException("비밀번호가 올바르지 않습니다.");
         }
 
-        // 거래 상태 확인
+        // 거래 상태가 B일 경우 실제 지원자수 * 예치금만큼 가용금액 플러스
+        // 거래 상태가 A일 경우 최대 지원자수 * 예치금만큼 가용금액 플러스
         if (deal.getStatus().equals("b")) {
-            // 거래 상태가 b일 경우 dealReceiver 삭제
-            // 근데 삭제해야 하나?
+            senderAccount.setAvailableBudget(deal.getDeposit() * deal.getRealPeopleNum() + senderAccount.getAvailableBudget());
             dealReceiverRepository.deleteByDeal(deal);
+        }else{
+            senderAccount.setAvailableBudget(deal.getDeposit() * deal.getMaxPeopleNum() + senderAccount.getAvailableBudget());
         }
 
-        // 송신자 계좌에 가용금액 플러스
-        senderAccount.setAvailableBudget(senderAccount.getAvailableBudget() + deal.getDeposit());
 
         // 거래 상태 c로 변경
         deal.setStatus("c");
