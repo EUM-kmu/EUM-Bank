@@ -31,6 +31,8 @@ public class AccountTransferHistory extends BaseEntity {
     private Long transferAmount;
 
     // 거래 유형
+    // a: 자유송금
+    // b: 거래 송금
     @Column(name = "transfer_type", nullable = false)
     private String transferType;
 

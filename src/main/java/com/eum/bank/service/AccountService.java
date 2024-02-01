@@ -4,6 +4,8 @@ import com.eum.bank.common.APIResponse;
 import com.eum.bank.common.dto.request.AccountTransferHistoryRequestDTO;
 import com.eum.bank.common.dto.request.TotalTransferHistoryRequestDTO;
 import com.eum.bank.common.dto.response.AccountResponseDTO;
+import com.eum.bank.common.dto.response.TotalTransferHistoryResponseDTO;
+import com.eum.bank.common.enums.ErrorCode;
 import com.eum.bank.common.enums.SuccessCode;
 import com.eum.bank.domain.account.entity.Account;
 import com.eum.bank.domain.account.entity.TotalTransferHistory;
@@ -113,7 +115,7 @@ public class AccountService {
     //  4. 수신자 전체금액, 가용금액 플러스
     //  5. 통합 거래내역 생성, 각 계좌 거래내역 생성
     @Transactional
-    public APIResponse<?> transfer(String senderAccountNumber, String receiverAccountNumber, Long deposit, String password, String transferType) {
+    public TotalTransferHistoryResponseDTO.GetTotalTransferHistory transfer(String senderAccountNumber, String receiverAccountNumber, Long amount, String password, String transferType) {
         Account senderAccount = this.validateAccount(senderAccountNumber);
         Account receiverAccount = this.validateAccount(receiverAccountNumber);
 
@@ -168,7 +170,9 @@ public class AccountService {
                         .build()
         );
 
-        return APIResponse.of(SuccessCode.INSERT_SUCCESS, response);
+        return TotalTransferHistoryResponseDTO.GetTotalTransferHistory.fromEntity(response);
     }
+
+
 
 }
