@@ -8,10 +8,7 @@ import com.eum.bank.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import static com.eum.bank.common.Constant.FREE_TYPE;
 
@@ -27,7 +24,7 @@ public class AccountController {
      * @param createAccount
      * @return
      */
-    @PostMapping("/create")
+    @PostMapping
     public ResponseEntity<?> create(@RequestBody AccountRequestDTO.CreateAccount createAccount) {
 
         String password = createAccount.getPassword();
@@ -37,7 +34,7 @@ public class AccountController {
     }
 
     // 계좌 조회
-    @PostMapping("/getAccount")
+    @GetMapping
     public ResponseEntity<?> getAccountInfo(@RequestBody AccountRequestDTO.GetAccount getAccountInfo) {
         String accountNumber = getAccountInfo.getAccountNumber();
         String password = getAccountInfo.getPassword();

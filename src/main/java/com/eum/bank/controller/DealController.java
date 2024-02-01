@@ -17,7 +17,7 @@ public class DealController {
     private final DealService dealService;
     private final AccountService accountService;
 
-    @PostMapping("/create")
+    @PostMapping
     public ResponseEntity<?> create(@RequestBody DealRequestDTO.Create create) {
         APIResponse<?> response = dealService.createDeal(create);
         
@@ -31,13 +31,13 @@ public class DealController {
     }
 
     // 거래 수정
-    @PostMapping("/update")
+    @PatchMapping
     public ResponseEntity<?> update(@RequestBody DealRequestDTO.updateDeal update) {
         return ResponseEntity.ok(dealService.updateDeal(update));
     }
 
     // 거래 취소
-    @PostMapping("/cancel")
+    @DeleteMapping
     public ResponseEntity<?> cancel(@RequestBody DealRequestDTO.cancelDeal cancel) {
         return ResponseEntity.ok(dealService.cancelDeal(cancel));
     }

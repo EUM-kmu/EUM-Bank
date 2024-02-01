@@ -32,7 +32,7 @@ public class DealService {
     // 거래 생성
     public APIResponse<?> createDeal(DealRequestDTO.Create create){
         // 거래 생성
-        // 거래상태 a -> WAITING
+        // 거래상태 a
         String accountNumber = create.getAccountNumber();
         String password = create.getPassword();
         Long deposit = create.getDeposit();
@@ -47,7 +47,7 @@ public class DealService {
 
         Deal deal = Deal.builder()
                 .senderAccount(account)
-                .status("WAITING")
+                .status("a")
                 .deposit(deposit)
                 .numberOfPeople(maxPeople)
                 .postId(postId)
