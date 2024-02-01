@@ -27,7 +27,7 @@ public class AccountRequestDTO {
         @NotEmpty(message = "비밀번호를 입력해주세요.")
         private String password;
         @NotEmpty(message = "송금 금액을 입력해주세요.")
-        private Long deposit;
+        private Long amount;
         // 수신자 계좌 번호
         @NotEmpty(message = "송금할 계좌 번호를 입력해주세요.")
         private String receiverAccountNumber;

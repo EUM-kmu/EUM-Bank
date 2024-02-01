@@ -30,19 +30,36 @@ public class DealController {
 
         Account account = accountService.getAccount(accountNumber);
 
-        if (apiResponse.getStatus() == 200){
             // 계좌가 존재하고 비밀번호가 일치하는 경우
             // 거래 생성
             dealService.createDeal(account, deposit, maxPeople, postId);
-        } else if (apiResponse.getStatus() == 400){
-            // 계좌가 존재하지 않는 경우
-            return ResponseEntity.badRequest().body(apiResponse);
-        } else if (apiResponse.getStatus() == 401){
-            // 비밀번호가 일치하지 않는 경우
-            return ResponseEntity.status(401).body(apiResponse);
-        }
+
 
         APIResponse<DealResponseDTO.Create> response = new APIResponse<>();
         return ResponseEntity.ok(response);
+    }
+
+    // 거래 성사
+    @PostMapping("/success")
+    public ResponseEntity<?> success(@RequestBody DealRequestDTO.completeDeal success) {
+        return ResponseEntity.ok(dealService.completeDeal(success));
+    }
+
+    // 거래 수정
+    @PostMapping("/update")
+    public ResponseEntity<?> update(@RequestBody DealRequestDTO.updateDeal update) {
+        return ResponseEntity.ok(dealService.updateDeal(update));
+    }
+
+    // 거래 취소
+    @PostMapping("/cancel")
+    public ResponseEntity<?> cancel(@RequestBody DealRequestDTO.cancelDeal cancel) {
+        return ResponseEntity.ok(dealService.cancelDeal(cancel));
+    }
+
+    // 거래 수행
+    @PostMapping("/execute")
+    public ResponseEntity<?> execute(@RequestBody DealRequestDTO.executeDeal execute) {
+        return ResponseEntity.ok(dealService.executeDeal(execute));
     }
 }
