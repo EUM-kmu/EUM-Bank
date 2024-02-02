@@ -19,6 +19,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Random;
 
+import static com.eum.bank.common.Constant.ACCOUNT_NUMBER_LENGTH;
+import static com.eum.bank.common.Constant.FREE_TYPE;
+
 @Service
 @RequiredArgsConstructor
 public class AccountService {
@@ -57,7 +60,7 @@ public class AccountService {
         Random random = new Random();
         StringBuilder uniqueNumber = new StringBuilder();
 
-        for (int i = 0; i < 12; i++) {
+        for (int i = 0; i < ACCOUNT_NUMBER_LENGTH; i++) {
             int digit = random.nextInt(10);
             uniqueNumber.append(digit);
         }
@@ -66,7 +69,7 @@ public class AccountService {
     }
 
     public Boolean validateAccountNumber(String accountNumber) {
-        if (accountNumber.length() != 12) {
+        if (accountNumber.length() != ACCOUNT_NUMBER_LENGTH) {
             return false;
         }
 
@@ -104,9 +107,6 @@ public class AccountService {
                 .build());
     }
 
-    public Account getAccount(String accountNumber) {
-        return accountRepository.findByAccountNumber(accountNumber).orElseThrow(() -> new IllegalArgumentException("Invalid account number"));
-    }
     // 자유송금
     //  1. 송금자 계좌, 수신자 계좌 상태 검증
     //  2. 송금자 잔액 확인
@@ -129,7 +129,7 @@ public class AccountService {
         }
 
         // 송금자 잔액 마이너스
-        if(transferType.equals("a")){
+        if(transferType.equals(FREE_TYPE)){
             senderAccount.setAvailableBudget(senderAccount.getAvailableBudget() - amount);
         }
         senderAccount.setTotalBudget(senderAccount.getTotalBudget() - amount);
