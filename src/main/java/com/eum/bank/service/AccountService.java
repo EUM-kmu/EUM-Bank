@@ -31,7 +31,6 @@ public class AccountService {
     private final AccountTransferHistoryService accountTransferHistoryService;
     private final TotalTransferHistoryService totalTransferHistoryService;
 
-
     public APIResponse<?> createAccount(String password) {
 
         String accountNumber;
@@ -91,6 +90,18 @@ public class AccountService {
         return account;
     }
 
+    // 계좌번호 와 비밀번호로 계좌 조회
+    public Account matchAccountPassword(String accountNumber, String password) {
+        Account account = this.validateAccount(accountNumber);
+
+        // 비밀번호 검증
+        if (!passwordEncoder.matches(password, account.getPassword())) {
+            throw new IllegalArgumentException("Invalid password");
+        }
+
+        return account;
+    }
+
     // 계좌번호와 비밀번호로 계좌 조회
     public APIResponse<AccountResponseDTO.AccountInfo> getAccount(String accountNumber, String password) {
         Account account = this.validateAccount(accountNumber);
@@ -107,21 +118,24 @@ public class AccountService {
                 .build());
     }
 
-    // 자유송금
-    //  1. 송금자 계좌, 수신자 계좌 상태 검증
-    //  2. 송금자 잔액 확인
-    //  3. 송금자 전체금액, 가용금액 마이너스
-    //  4. 수신자 전체금액, 가용금액 플러스
-    //  5. 통합 거래내역 생성, 각 계좌 거래내역 생성
+    /**
+     * 자유 송금
+     * 1. 송금자 계좌, 수신자 계좌 상태 검증
+     * 2. 송금자 잔액 확인
+     * 3. 송금자 전체금액, 가용금액 마이너스
+     * 4. 수신자 전체금액, 가용금액 플러스
+     * 5. 통합 거래내역 생성, 각 계좌 거래내역 생성
+     *
+     * @param senderAccountNumber
+     * @param receiverAccountNumber
+     * @param amount
+     * @param password
+     * @return
+     */
     @Transactional
     public TotalTransferHistoryResponseDTO.GetTotalTransferHistory transfer(String senderAccountNumber, String receiverAccountNumber, Long amount, String password, String transferType) {
-        Account senderAccount = this.validateAccount(senderAccountNumber);
+        Account senderAccount = this.matchAccountPassword(senderAccountNumber, password);
         Account receiverAccount = this.validateAccount(receiverAccountNumber);
-
-        // 비밀번호 검증
-        if (!passwordEncoder.matches(password, senderAccount.getPassword())) {
-            throw new IllegalArgumentException("Invalid password");
-        }
 
         // 송금자 잔액 검증
         if (senderAccount.getAvailableBudget() < amount) {

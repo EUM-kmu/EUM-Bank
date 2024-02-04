@@ -20,19 +20,16 @@ public final class Constant {
      */
     public static final String BEFORE_DEAL = "before_deal";
 
-    // b: 거래 성사 후 (수신계좌가 엮인 상태)
     /**
      * 거래 성사 후 (수신계좌가 엮인 상태)
      */
     public static final String AFTER_DEAL = "after_deal";
 
-    // c: 거래 취소 됨
     /**
      * 거래 취소 됨
      */
     public static final String CANCEL_DEAL = "cancel_deal";
 
-    // d: 거래 수행 됨
     /**
      * 거래 수행 됨
      */
