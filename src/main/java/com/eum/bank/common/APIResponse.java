@@ -35,13 +35,13 @@ public class APIResponse<T> {
         this.detailMsg = "";
     }
     @Builder
-        public APIResponse(final SuccessCode code, String detailMsg) {
-            this.msg = code.getMessage();
-            this.status = code.getStatus();
-            this.code = code.getCode();
-            this.detailMsg = detailMsg;
-            this.data = (T) "";
-        }
+    public APIResponse(final SuccessCode code, String detailMsg) {
+        this.msg = code.getMessage();
+        this.status = code.getStatus();
+        this.code = code.getCode();
+        this.detailMsg = detailMsg;
+        this.data = (T) "";
+    }
 
 
 

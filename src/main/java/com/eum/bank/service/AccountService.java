@@ -11,6 +11,7 @@ import com.eum.bank.domain.account.entity.TotalTransferHistory;
 import com.eum.bank.repository.AccountRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,6 +22,7 @@ import static com.eum.bank.common.Constant.FREE_TYPE;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AccountService {
 
     private final AccountRepository accountRepository;
@@ -47,9 +49,11 @@ public class AccountService {
 
         accountRepository.save(account);
 
-        return APIResponse.of(SuccessCode.SELECT_SUCCESS, AccountResponseDTO.Create.builder()
+        AccountResponseDTO.Create response = AccountResponseDTO.Create.builder()
                 .accountNumber(account.getAccountNumber())
-                .build());
+                .build();
+
+        return APIResponse.of(SuccessCode.SELECT_SUCCESS, response);
     }
 
     public String generateAccountNumber() {
@@ -69,18 +73,15 @@ public class AccountService {
             return false;
         }
 
-        // 계좌번호 중복 검증
-        //  - 계좌번호가 중복되면 false
-        if (accountRepository.findByAccountNumber(accountNumber).isPresent()) {
-            return false;
-        }
-
-        return true;
+        return accountRepository.findByAccountNumber(accountNumber).isEmpty();
     }
 
     // 계좌 검증 (계좌 존재여부 + 블락 여부)
     public Account validateAccount(String accountNumber) {
-        Account account = accountRepository.findByAccountNumber(accountNumber).orElseThrow(() -> new IllegalArgumentException("Invalid account number : " + accountNumber));
+        Account account = accountRepository
+                .findByAccountNumber(accountNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid account number : " + accountNumber));
+
         if(account.getIsBlocked()){
             throw new IllegalArgumentException("Blocked account : " + accountNumber);
         }
@@ -100,13 +101,8 @@ public class AccountService {
     }
 
     // 계좌번호와 비밀번호로 계좌 조회
-    public APIResponse<AccountResponseDTO.AccountInfo> getAccount(String accountNumber, String password) {
-        Account account = this.validateAccount(accountNumber);
-
-        // 비밀번호 검증
-        if (!passwordEncoder.matches(password, account.getPassword())) {
-            throw new IllegalArgumentException("Invalid password");
-        }
+    public APIResponse<?> getAccount(String accountNumber, String password) {
+        Account account = this.matchAccountPassword(accountNumber, password);
 
         return APIResponse.of(SuccessCode.SELECT_SUCCESS, AccountResponseDTO.AccountInfo.builder()
                 .accountNumber(account.getAccountNumber())
@@ -122,12 +118,6 @@ public class AccountService {
      * 3. 송금자 전체금액, 가용금액 마이너스
      * 4. 수신자 전체금액, 가용금액 플러스
      * 5. 통합 거래내역 생성, 각 계좌 거래내역 생성
-     *
-     * @param senderAccountNumber
-     * @param receiverAccountNumber
-     * @param amount
-     * @param password
-     * @return
      */
     @Transactional
     public TotalTransferHistoryResponseDTO.GetTotalTransferHistory transfer(String senderAccountNumber, String receiverAccountNumber, Long amount, String password, String transferType) {
@@ -144,8 +134,6 @@ public class AccountService {
             senderAccount.setAvailableBudget(senderAccount.getAvailableBudget() - amount);
         }
         senderAccount.setTotalBudget(senderAccount.getTotalBudget() - amount);
-
-
 
         // 수신자 잔액 플러스
         receiverAccount.setTotalBudget(receiverAccount.getTotalBudget() + amount);
@@ -172,6 +160,7 @@ public class AccountService {
                         .memo("")
                         .build()
         );
+
         accountTransferHistoryService.save(
                 AccountTransferHistoryRequestDTO.CreateAccountTransferHistory.builder()
                         .ownerAccount(receiverAccount)
@@ -185,7 +174,5 @@ public class AccountService {
 
         return TotalTransferHistoryResponseDTO.GetTotalTransferHistory.fromEntity(response);
     }
-
-
 
 }

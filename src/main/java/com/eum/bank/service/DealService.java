@@ -29,10 +29,9 @@ public class DealService {
     private final DealReceiverRepository dealReceiverRepository;
     private final PasswordEncoder passwordEncoder;
 
-
     // 거래 생성
     @Transactional
-    public APIResponse<?> createDeal(DealRequestDTO.Create create){
+    public APIResponse<?> createDeal(DealRequestDTO.Create create) {
         // 거래 생성
         // 거래상태 before_deal
         String accountNumber = create.getAccountNumber();
