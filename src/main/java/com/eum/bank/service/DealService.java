@@ -41,11 +41,7 @@ public class DealService {
         Long maxPeople = create.getMaxPeople();
         Long postId = create.getPostId();
 
-        Account account = accountService.validateAccount(accountNumber);
-
-        if (!passwordEncoder.matches(password, account.getPassword())) {
-            throw new IllegalArgumentException("비밀번호가 올바르지 않습니다.");
-        }
+        Account account = accountService.matchAccountPassword(accountNumber, password);
 
         Deal deal = Deal.builder()
                 .senderAccount(account)
@@ -88,10 +84,7 @@ public class DealService {
         Long realPeopleNum = (long) receiverAccountNumbers.size();
 
         // 송신계좌 검증 및 잔액 확인
-        Account senderAccount = accountService.validateAccount(deal.getSenderAccount().getAccountNumber());
-        if (!passwordEncoder.matches(dto.getPassword(), senderAccount.getPassword())) {
-            throw new IllegalArgumentException("비밀번호가 올바르지 않습니다.");
-        }
+        Account senderAccount = accountService.matchAccountPassword(deal.getSenderAccount().getAccountNumber(), dto.getPassword());
 
         // 최대 모집인원 - 최종 모집인원 * 예치금 만큼 다시 가용금액 플러스
         Long diff = deal.getDeposit() * (deal.getMaxPeopleNum() - realPeopleNum);

@@ -1,15 +1,12 @@
 package com.eum.bank.service;
 
 import com.eum.bank.common.APIResponse;
-import com.eum.bank.common.ErrorResponse;
 import com.eum.bank.common.dto.request.AccountTransferHistoryRequestDTO;
 import com.eum.bank.common.dto.request.TotalTransferHistoryRequestDTO;
 import com.eum.bank.common.dto.response.AccountResponseDTO;
 import com.eum.bank.common.dto.response.TotalTransferHistoryResponseDTO;
-import com.eum.bank.common.enums.ErrorCode;
 import com.eum.bank.common.enums.SuccessCode;
 import com.eum.bank.domain.account.entity.Account;
-import com.eum.bank.domain.account.entity.AccountTransferHistory;
 import com.eum.bank.domain.account.entity.TotalTransferHistory;
 import com.eum.bank.repository.AccountRepository;
 import jakarta.transaction.Transactional;
