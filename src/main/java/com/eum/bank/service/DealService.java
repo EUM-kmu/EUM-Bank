@@ -3,6 +3,7 @@ package com.eum.bank.service;
 import com.eum.bank.common.APIResponse;
 
 import com.eum.bank.common.dto.request.DealRequestDTO;
+import com.eum.bank.common.dto.response.AccountResponseDTO;
 import com.eum.bank.common.dto.response.DealResponseDTO;
 import com.eum.bank.common.dto.response.TotalTransferHistoryResponseDTO;
 import com.eum.bank.common.enums.SuccessCode;
@@ -29,11 +30,14 @@ public class DealService {
     private final DealReceiverRepository dealReceiverRepository;
     private final PasswordEncoder passwordEncoder;
 
-    // 거래 생성
+    /**
+     * 거래 생성
+     * @param create
+     * @return
+     */
     @Transactional
     public APIResponse<?> createDeal(DealRequestDTO.Create create) {
-        // 거래 생성
-        // 거래상태 before_deal
+
         String accountNumber = create.getAccountNumber();
         String password = create.getPassword();
         Long deposit = create.getDeposit();
@@ -41,6 +45,13 @@ public class DealService {
         Long postId = create.getPostId();
 
         Account account = accountService.matchAccountPassword(accountNumber, password);
+
+        Long finalDeposit = deposit * maxPeople;
+
+        accountService.validatePayment(account, finalDeposit);
+
+        // 가용금액 마이너스
+        accountService.changeAvailableBudget(account, -finalDeposit);
 
         Deal deal = Deal.builder()
                 .senderAccount(account)
@@ -53,12 +64,7 @@ public class DealService {
 
         dealRepository.save(deal);
 
-        // 송신자 계좌에 가용금액 마이너스
-        Long finalDeposit = deposit * deal.getMaxPeopleNum();
-        if (account.getAvailableBudget() < finalDeposit) {
-            throw new IllegalArgumentException("잔액이 부족합니다.");
-        }
-        account.setAvailableBudget(account.getAvailableBudget() - finalDeposit);
+
 
         DealResponseDTO.Create response = DealResponseDTO.Create.builder()
                 .dealId(deal.getId())
@@ -76,7 +82,7 @@ public class DealService {
     //    6. 거래ID 반환
     @Transactional
     public APIResponse<Long> completeDeal(DealRequestDTO.completeDeal dto) {
-        // 거래 검증 및 거래 상태 a 인지 검증
+        // 거래 검증 및 거래 상태 BEFORE_DEAL 인지 검증
         Deal deal = this.validateDeal(dto.getDealId(), List.of(BEFORE_DEAL));
 
         List<String> receiverAccountNumbers = List.of(dto.getReceiverAccountNumbers());
@@ -207,13 +213,17 @@ public class DealService {
         return APIResponse.of(SuccessCode.DELETE_SUCCESS, dealRepository.save(deal).getId());
     }
 
-    // 거래 수행
-    //    1. 거래 ID 확인
-    //    2. 수신계좌들에 자유송금
-    //    3. 거래 상태 d로 변경
-    //    4. 통합 거래내역리스트 반환
+    /**
+     * 거래 수행
+     * 1. 거래 ID 확인
+     * 2. 수신계좌들에 자유송금 ( 일괄 송금 )
+     * 3. 거래 상태 d로 변경
+     * 4. 통합 거래내역리스트 반환
+     * @param dto
+     * @return
+     */
     @Transactional
-    public APIResponse<List<TotalTransferHistoryResponseDTO.GetTotalTransferHistory>> executeDeal(DealRequestDTO.executeDeal dto) {
+    public APIResponse<?> executeDeal(DealRequestDTO.executeDeal dto) {
         // 거래ID로 존재여부 + 거래상태 검증
         Deal deal = this.validateDeal(dto.getDealId(), List.of(AFTER_DEAL));
 
@@ -222,9 +232,19 @@ public class DealService {
 
         // 수신계좌들에 자유송금
         List<DealReceiver> dealReceivers = dealReceiverRepository.findAllByDeal(deal);
+
         for (DealReceiver dealReceiver : dealReceivers) {
+
+            AccountResponseDTO.transfer transfer = AccountResponseDTO.transfer.builder()
+                    .senderAccountNumber(deal.getSenderAccount().getAccountNumber())
+                    .receiverAccountNumber(dealReceiver.getReceiverAccount().getAccountNumber())
+                    .amount(deal.getDeposit())
+                    .password(dto.getPassword())
+                    .transferType(BATCH_TYPE)
+                    .build();
+
             totalTransferHistoryIds.add(
-                    accountService.transfer(deal.getSenderAccount().getAccountNumber(), dealReceiver.getReceiverAccount().getAccountNumber(), deal.getDeposit(), dto.getPassword(), FREE_TYPE)
+                    accountService.transfer(transfer)
             );
         }
 

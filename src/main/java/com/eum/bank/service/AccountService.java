@@ -120,19 +120,24 @@ public class AccountService {
      * 5. 통합 거래내역 생성, 각 계좌 거래내역 생성
      */
     @Transactional
-    public TotalTransferHistoryResponseDTO.GetTotalTransferHistory transfer(String senderAccountNumber, String receiverAccountNumber, Long amount, String password, String transferType) {
+    public TotalTransferHistoryResponseDTO.GetTotalTransferHistory transfer(AccountResponseDTO.transfer transfer) {
+
+        String senderAccountNumber = transfer.getSenderAccountNumber();
+        String receiverAccountNumber = transfer.getReceiverAccountNumber();
+        Long amount = transfer.getAmount();
+        String password = transfer.getPassword();
+        String transferType = transfer.getTransferType();
+
+
         Account senderAccount = this.matchAccountPassword(senderAccountNumber, password);
         Account receiverAccount = this.validateAccount(receiverAccountNumber);
 
         // 송금자 잔액 검증
-        if (senderAccount.getAvailableBudget() < amount) {
-            throw new IllegalArgumentException("Insufficient balance");
-        }
+        this.validatePayment(senderAccount, amount);
 
         // 송금자 잔액 마이너스
-        if(transferType.equals(FREE_TYPE)){
-            senderAccount.setAvailableBudget(senderAccount.getAvailableBudget() - amount);
-        }
+        senderAccount.setAvailableBudget(senderAccount.getAvailableBudget() - amount);
+
         senderAccount.setTotalBudget(senderAccount.getTotalBudget() - amount);
 
         // 수신자 잔액 플러스
@@ -175,4 +180,32 @@ public class AccountService {
         return TotalTransferHistoryResponseDTO.GetTotalTransferHistory.fromEntity(response);
     }
 
+    /**
+     * 지불 능력 판단
+     * @param account
+     * @param amount
+     */
+    public void validatePayment(Account account, Long amount) {
+        if (account.getAvailableBudget() < amount) {
+            throw new IllegalArgumentException("Invalid amount");
+        }
+    }
+
+    /**
+     * 전체 예산 변경
+     * @param account
+     * @param amount
+     */
+    public void changeTotalBudget(Account account, Long amount) {
+        account.setTotalBudget(account.getTotalBudget() + amount);
+    }
+
+    /**
+     * 가용금액 변경
+     * @param account
+     * @param amount
+     */
+    public void changeAvailableBudget(Account account, Long amount) {
+        account.setAvailableBudget(account.getAvailableBudget() + amount);
+    }
 }

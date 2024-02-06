@@ -2,6 +2,7 @@ package com.eum.bank.controller;
 
 import com.eum.bank.common.APIResponse;
 import com.eum.bank.common.dto.request.AccountRequestDTO;
+import com.eum.bank.common.dto.response.AccountResponseDTO;
 import com.eum.bank.common.dto.response.TotalTransferHistoryResponseDTO;
 import com.eum.bank.common.enums.SuccessCode;
 import com.eum.bank.service.AccountService;
@@ -47,7 +48,15 @@ public class AccountController {
     // 자유 송금
     @PostMapping("/transfer")
     public ResponseEntity<?> transfer(@RequestBody AccountRequestDTO.Transfer transfer) {
-        TotalTransferHistoryResponseDTO.GetTotalTransferHistory response = accountService.transfer(transfer.getAccountNumber(), transfer.getReceiverAccountNumber(), transfer.getAmount(), transfer.getPassword(), FREE_TYPE);
+        AccountResponseDTO.transfer transferResponse = AccountResponseDTO.transfer.builder()
+                .senderAccountNumber(transfer.getAccountNumber())
+                .receiverAccountNumber(transfer.getReceiverAccountNumber())
+                .amount(transfer.getAmount())
+                .password(transfer.getPassword())
+                .transferType(FREE_TYPE)
+                .build();
+
+        TotalTransferHistoryResponseDTO.GetTotalTransferHistory response = accountService.transfer(transferResponse);
         return ResponseEntity.ok(APIResponse.of(SuccessCode.INSERT_SUCCESS, response));
     }
 

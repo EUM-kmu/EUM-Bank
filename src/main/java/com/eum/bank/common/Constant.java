@@ -16,6 +16,11 @@ public final class Constant {
     public static final String FREE_TYPE = "free";
 
     /**
+     * 일괄 송금 타입.
+     */
+    public static final String BATCH_TYPE = "batch";
+
+    /**
      * 거래 생성 후 거래 성사 전 (수신계좌가 안엮인 상태).
      */
     public static final String BEFORE_DEAL = "before_deal";
