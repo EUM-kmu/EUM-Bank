@@ -32,41 +32,28 @@ public class DealService {
 
     /**
      * 거래 생성
-     * @param create
+     * @param createDeal
      * @return
      */
     @Transactional
-    public APIResponse<?> createDeal(DealRequestDTO.createDeal create) {
+    public APIResponse<?> createDeal(DealRequestDTO.createDeal createDeal) {
 
-        String accountNumber = create.getAccountNumber();
-        String password = create.getPassword();
-        Long deposit = create.getDeposit();
-        Long maxPeople = create.getMaxPeople();
-        Long postId = create.getPostId();
-
+        String accountNumber = createDeal.getAccountNumber();
+        String password = createDeal.getPassword();
+        Long deposit = createDeal.getDeposit();
+        Long maxPeople = createDeal.getMaxPeople();
+        
         Account account = accountService.matchAccountPassword(accountNumber, password);
 
         Long finalDeposit = deposit * maxPeople;
 
-        accountService.validatePayment(account, finalDeposit);
-
         // 가용금액 마이너스
-        accountService.changeAvailableBudget(account, -finalDeposit);
+        accountService.changeAvailableBudget(account, finalDeposit, DECREASE);
 
-        Deal deal = Deal.builder()
-                .senderAccount(account)
-                .status(BEFORE_DEAL)
-                .deposit(deposit)
-                .maxPeopleNum(maxPeople)
-                .realPeopleNum(0L)
-                .postId(postId)
-                .build();
-
+        Deal deal = Deal.initializeDeal(account, createDeal);
         dealRepository.save(deal);
 
-        DealResponseDTO.Create response = DealResponseDTO.Create.builder()
-                .dealId(deal.getId())
-                .build();
+        DealResponseDTO.createDeal response = new DealResponseDTO.createDeal(deal.getId());
 
         return APIResponse.of(SuccessCode.INSERT_SUCCESS, response);
     }

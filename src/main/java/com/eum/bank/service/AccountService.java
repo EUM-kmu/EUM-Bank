@@ -1,8 +1,6 @@
 package com.eum.bank.service;
 
 import com.eum.bank.common.APIResponse;
-import com.eum.bank.common.dto.request.AccountTransferHistoryRequestDTO;
-import com.eum.bank.common.dto.request.TotalTransferHistoryRequestDTO;
 import com.eum.bank.common.dto.response.AccountResponseDTO;
 import com.eum.bank.common.dto.response.TotalTransferHistoryResponseDTO;
 import com.eum.bank.common.enums.SuccessCode;
@@ -17,7 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Random;
 
-import static com.eum.bank.common.Constant.ACCOUNT_NUMBER_LENGTH;
+import static com.eum.bank.common.Constant.*;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +27,11 @@ public class AccountService {
     private final AccountTransferHistoryService accountTransferHistoryService;
     private final TotalTransferHistoryService totalTransferHistoryService;
 
+    /**
+     * 계좌 생성
+     * @param password
+     * @return
+     */
     public APIResponse<?> createAccount(String password) {
 
         String accountNumber = this.generateAccountNumber();
@@ -40,6 +43,41 @@ public class AccountService {
         AccountResponseDTO.Create response = new AccountResponseDTO.Create(account.getAccountNumber());
 
         return APIResponse.of(SuccessCode.SELECT_SUCCESS, response);
+    }
+
+    /**
+     * 자유 송금
+     * 1. 송금자 계좌, 수신자 계좌 상태 검증
+     * 2. 송금자 잔액 확인
+     * 3. 송금자 전체금액, 가용금액 마이너스
+     * 4. 수신자 전체금액, 가용금액 플러스
+     * 5. 통합 거래내역 생성, 각 계좌 거래내역 생성
+     */
+    @Transactional
+    public TotalTransferHistoryResponseDTO.GetTotalTransferHistory transfer(AccountResponseDTO.transfer transfer) {
+
+        Long amount = transfer.getAmount();
+        String password = transfer.getPassword();
+        String transferType = transfer.getTransferType();
+
+        Account senderAccount = matchAccountPassword(transfer.getSenderAccountNumber(), password);
+        Account receiverAccount = validateAccount(transfer.getReceiverAccountNumber());
+
+        // 송금자 잔액 검증
+        validatePayment(senderAccount, amount);
+
+        // 송금자 잔액 마이너스
+        changeBudget(senderAccount, amount, DECREASE);
+
+        // 수신자 잔액 플러스
+        changeBudget(receiverAccount, amount, INCREASE);
+
+        // 통합 거래내역 생성
+        TotalTransferHistory response = totalTransferHistoryService.generateTotalHistory(senderAccount, receiverAccount, amount, transferType);
+
+        accountTransferHistoryService.generateAccountHistory(senderAccount, receiverAccount, amount, transferType);
+
+        return TotalTransferHistoryResponseDTO.GetTotalTransferHistory.fromEntity(response);
     }
 
     public String generateAccountNumber() {
@@ -101,57 +139,6 @@ public class AccountService {
                 .build());
     }
 
-    /**
-     * 자유 송금
-     * 1. 송금자 계좌, 수신자 계좌 상태 검증
-     * 2. 송금자 잔액 확인
-     * 3. 송금자 전체금액, 가용금액 마이너스
-     * 4. 수신자 전체금액, 가용금액 플러스
-     * 5. 통합 거래내역 생성, 각 계좌 거래내역 생성
-     */
-    @Transactional
-    public TotalTransferHistoryResponseDTO.GetTotalTransferHistory transfer(AccountResponseDTO.transfer transfer) {
-
-        String senderAccountNumber = transfer.getSenderAccountNumber();
-        String receiverAccountNumber = transfer.getReceiverAccountNumber();
-        Long amount = transfer.getAmount();
-        String password = transfer.getPassword();
-        String transferType = transfer.getTransferType();
-
-
-        Account senderAccount = this.matchAccountPassword(senderAccountNumber, password);
-        Account receiverAccount = this.validateAccount(receiverAccountNumber);
-
-        // 송금자 잔액 검증
-        this.validatePayment(senderAccount, amount);
-
-        // 송금자 잔액 마이너스
-        senderAccount.setAvailableBudget(senderAccount.getAvailableBudget() - amount);
-
-        senderAccount.setTotalBudget(senderAccount.getTotalBudget() - amount);
-
-        // 수신자 잔액 플러스
-        receiverAccount.setTotalBudget(receiverAccount.getTotalBudget() + amount);
-        receiverAccount.setAvailableBudget(receiverAccount.getAvailableBudget() + amount);
-
-        // 통합 거래내역 생성
-        TotalTransferHistory response = totalTransferHistoryService.save(
-                new TotalTransferHistoryRequestDTO.CreateTotalTransferHistory(senderAccount, receiverAccount, amount, transferType)
-        );
-
-        // 각 계좌 거래내역 생성
-        accountTransferHistoryService.save(
-                AccountTransferHistoryRequestDTO.CreateAccountTransferHistory
-                        .generateWithSender(senderAccount, receiverAccount, -amount, transferType)
-        );
-
-        accountTransferHistoryService.save(
-                AccountTransferHistoryRequestDTO.CreateAccountTransferHistory
-                        .generateWithReceiver(senderAccount, receiverAccount, amount, transferType)
-        );
-
-        return TotalTransferHistoryResponseDTO.GetTotalTransferHistory.fromEntity(response);
-    }
 
     /**
      * 지불 능력 판단
@@ -169,8 +156,14 @@ public class AccountService {
      * @param account
      * @param amount
      */
-    public void changeTotalBudget(Account account, Long amount) {
+    public void changeBudget(Account account, Long amount, String transferType) {
+        if(transferType.equals(DECREASE)){
+            validatePayment(account, amount);
+            amount = -amount;
+        }
+
         account.setTotalBudget(account.getTotalBudget() + amount);
+        account.setAvailableBudget(account.getAvailableBudget() + amount);
     }
 
     /**
@@ -178,7 +171,12 @@ public class AccountService {
      * @param account
      * @param amount
      */
-    public void changeAvailableBudget(Account account, Long amount) {
+    public void changeAvailableBudget(Account account, Long amount, String transferType) {
+        if(transferType.equals(DECREASE)){
+            validatePayment(account, amount);
+            amount = -amount;
+        }
+
         account.setAvailableBudget(account.getAvailableBudget() + amount);
     }
 }

@@ -1,9 +1,13 @@
 package com.eum.bank.domain.deal.entity;
 
+import com.eum.bank.common.dto.request.DealRequestDTO;
 import com.eum.bank.domain.account.entity.Account;
 import com.eum.bank.domain.base.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+
+import static com.eum.bank.common.Constant.BEFORE_DEAL;
+import static com.eum.bank.common.Constant.FREE_TYPE;
 
 @Entity
 @Getter
@@ -45,4 +49,15 @@ public class Deal extends BaseEntity {
     // 게시글 ID
     @Column(name = "post_id", nullable = false)
     private Long postId;
+
+    public static Deal initializeDeal(Account account,DealRequestDTO.createDeal createDeal) {
+        return Deal.builder()
+                .senderAccount(account)
+                .status(BEFORE_DEAL)
+                .deposit(createDeal.getDeposit())
+                .maxPeopleNum(createDeal.getMaxPeople())
+                .realPeopleNum(0L)
+                .postId(createDeal.getPostId())
+                .build();
+    }
 }
