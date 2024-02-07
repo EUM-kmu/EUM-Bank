@@ -7,7 +7,7 @@ import lombok.Builder;
 public class DealRequestDTO {
     @Builder
     @Getter
-    public static class  Create{
+    public static class createDeal{
         //송금자 계좌번호
         private String accountNumber;
         // 비밀번호

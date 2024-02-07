@@ -36,7 +36,7 @@ public class DealService {
      * @return
      */
     @Transactional
-    public APIResponse<?> createDeal(DealRequestDTO.Create create) {
+    public APIResponse<?> createDeal(DealRequestDTO.createDeal create) {
 
         String accountNumber = create.getAccountNumber();
         String password = create.getPassword();
@@ -63,8 +63,6 @@ public class DealService {
                 .build();
 
         dealRepository.save(deal);
-
-
 
         DealResponseDTO.Create response = DealResponseDTO.Create.builder()
                 .dealId(deal.getId())

@@ -3,6 +3,7 @@ package com.eum.bank.common.dto.request;
 import com.eum.bank.domain.account.entity.Account;
 import com.eum.bank.domain.account.entity.AccountTransferHistory;
 import jakarta.validation.constraints.NotEmpty;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -34,6 +35,28 @@ public class AccountTransferHistoryRequestDTO {
                     .transferType(transferType)
                     .budgetAfterTransfer(budgetAfterTransfer)
                     .memo(memo)
+                    .build();
+        }
+
+        public static CreateAccountTransferHistory generateWithSender(Account senderAccount, Account receiverAccount, Long transferAmount, String transferType){
+            return CreateAccountTransferHistory.builder()
+                    .ownerAccount(senderAccount)
+                    .oppenentAccount(receiverAccount)
+                    .transferAmount(transferAmount)
+                    .transferType(transferType)
+                    .budgetAfterTransfer(senderAccount.getAvailableBudget())
+                    .memo("")
+                    .build();
+        }
+
+        public static CreateAccountTransferHistory generateWithReceiver(Account senderAccount, Account receiverAccount, Long transferAmount, String transferType){
+            return CreateAccountTransferHistory.builder()
+                    .ownerAccount(receiverAccount)
+                    .oppenentAccount(senderAccount)
+                    .transferAmount(transferAmount)
+                    .transferType(transferType)
+                    .budgetAfterTransfer(receiverAccount.getAvailableBudget())
+                    .memo("")
                     .build();
         }
     }

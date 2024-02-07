@@ -15,10 +15,9 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class DealController {
     private final DealService dealService;
-    private final AccountService accountService;
 
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody DealRequestDTO.Create create) {
+    public ResponseEntity<?> create(@RequestBody DealRequestDTO.createDeal create) {
         APIResponse<?> response = dealService.createDeal(create);
         
         return ResponseEntity.ok(response);

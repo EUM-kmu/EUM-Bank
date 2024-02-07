@@ -18,7 +18,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Random;
 
 import static com.eum.bank.common.Constant.ACCOUNT_NUMBER_LENGTH;
-import static com.eum.bank.common.Constant.FREE_TYPE;
 
 @Service
 @RequiredArgsConstructor
@@ -32,38 +31,29 @@ public class AccountService {
 
     public APIResponse<?> createAccount(String password) {
 
-        String accountNumber;
-        do {
-            accountNumber = generateAccountNumber();
-        }while (
-                !validateAccountNumber(accountNumber)
-        );
+        String accountNumber = this.generateAccountNumber();
 
-        Account account = Account.builder()
-                .accountNumber(accountNumber)
-                .password(passwordEncoder.encode(password))
-                .totalBudget(0L)
-                .availableBudget(0L)
-                .isBlocked(false)
-                .build();
+        Account account = Account.initializeAccount(accountNumber, passwordEncoder.encode(password));
 
         accountRepository.save(account);
 
-        AccountResponseDTO.Create response = AccountResponseDTO.Create.builder()
-                .accountNumber(account.getAccountNumber())
-                .build();
+        AccountResponseDTO.Create response = new AccountResponseDTO.Create(account.getAccountNumber());
 
         return APIResponse.of(SuccessCode.SELECT_SUCCESS, response);
     }
 
     public String generateAccountNumber() {
         Random random = new Random();
-        StringBuilder uniqueNumber = new StringBuilder();
+        StringBuilder uniqueNumber;
 
-        for (int i = 0; i < ACCOUNT_NUMBER_LENGTH; i++) {
-            int digit = random.nextInt(10);
-            uniqueNumber.append(digit);
-        }
+        do {
+            uniqueNumber = new StringBuilder();
+            for (int i = 0; i < ACCOUNT_NUMBER_LENGTH; i++) {
+                int digit = random.nextInt(10);
+                uniqueNumber.append(digit);
+            }
+
+        } while (accountRepository.findByAccountNumber(uniqueNumber.toString()).isPresent());
 
         return uniqueNumber.toString();
     }
@@ -88,7 +78,7 @@ public class AccountService {
         return account;
     }
 
-    // 계좌번호 와 비밀번호로 계좌 조회
+    // 계좌번호 와 비밀번호 매치
     public Account matchAccountPassword(String accountNumber, String password) {
         Account account = this.validateAccount(accountNumber);
 
@@ -146,35 +136,18 @@ public class AccountService {
 
         // 통합 거래내역 생성
         TotalTransferHistory response = totalTransferHistoryService.save(
-                TotalTransferHistoryRequestDTO.CreateTotalTransferHistory.builder()
-                        .senderAccount(senderAccount)
-                        .receiverAccount(receiverAccount)
-                        .transferAmount(amount)
-                        .transferType(transferType)
-                        .build()
+                new TotalTransferHistoryRequestDTO.CreateTotalTransferHistory(senderAccount, receiverAccount, amount, transferType)
         );
 
         // 각 계좌 거래내역 생성
         accountTransferHistoryService.save(
-                AccountTransferHistoryRequestDTO.CreateAccountTransferHistory.builder()
-                        .ownerAccount(senderAccount)
-                        .oppenentAccount(receiverAccount)
-                        .transferAmount(amount)
-                        .transferType(transferType)
-                        .budgetAfterTransfer(senderAccount.getAvailableBudget())
-                        .memo("")
-                        .build()
+                AccountTransferHistoryRequestDTO.CreateAccountTransferHistory
+                        .generateWithSender(senderAccount, receiverAccount, -amount, transferType)
         );
 
         accountTransferHistoryService.save(
-                AccountTransferHistoryRequestDTO.CreateAccountTransferHistory.builder()
-                        .ownerAccount(receiverAccount)
-                        .oppenentAccount(senderAccount)
-                        .transferAmount(-amount)
-                        .transferType(transferType)
-                        .budgetAfterTransfer(receiverAccount.getAvailableBudget())
-                        .memo("")
-                        .build()
+                AccountTransferHistoryRequestDTO.CreateAccountTransferHistory
+                        .generateWithReceiver(senderAccount, receiverAccount, amount, transferType)
         );
 
         return TotalTransferHistoryResponseDTO.GetTotalTransferHistory.fromEntity(response);
