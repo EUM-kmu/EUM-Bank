@@ -33,4 +33,14 @@ public class AccountResponseDTO {
                     .build();
         }
     }
+
+    @Builder
+    @Getter
+    public static class transfer {
+        private String senderAccountNumber;
+        private String receiverAccountNumber;
+        private Long amount;
+        private String password;
+        private String transferType;
+    }
 }
