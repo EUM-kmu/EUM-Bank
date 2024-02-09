@@ -1,7 +1,6 @@
 package com.eum.bank.service;
 
 import com.eum.bank.common.APIResponse;
-
 import com.eum.bank.common.dto.request.DealRequestDTO;
 import com.eum.bank.common.dto.response.AccountResponseDTO;
 import com.eum.bank.common.dto.response.DealResponseDTO;
@@ -32,63 +31,65 @@ public class DealService {
 
     /**
      * 거래 생성
+     * 1. 계좌번호, 비밀번호 일치여부 확인
+     * 2. 가용금액 마이너스
+     * 3. 거래 저장
+     * 4. 거래ID 반환
+     *
      * @param createDeal
      * @return
      */
     @Transactional
     public APIResponse<?> createDeal(DealRequestDTO.createDeal createDeal) {
 
-        String accountNumber = createDeal.getAccountNumber();
-        String password = createDeal.getPassword();
-        Long deposit = createDeal.getDeposit();
-        Long maxPeople = createDeal.getMaxPeople();
-        
-        Account account = accountService.matchAccountPassword(accountNumber, password);
+        Account account = accountService.matchAccountPassword(createDeal.getAccountNumber(), createDeal.getPassword());
 
-        Long finalDeposit = deposit * maxPeople;
+        Long finalDeposit = this.calculateDeposit(createDeal.getDeposit(), createDeal.getMaxPeople());
 
         // 가용금액 마이너스
         accountService.changeAvailableBudget(account, finalDeposit, DECREASE);
 
-        Deal deal = Deal.initializeDeal(account, createDeal);
-        dealRepository.save(deal);
+        // 거래 생성 후 저장 후 거래ID 반환
+        Long dealId = dealRepository.save(Deal.initializeDeal(account, createDeal)).getId();
 
-        DealResponseDTO.createDeal response = new DealResponseDTO.createDeal(deal.getId());
+        DealResponseDTO.createDeal response = new DealResponseDTO.createDeal(dealId);
 
         return APIResponse.of(SuccessCode.INSERT_SUCCESS, response);
     }
-  
-    // 거래 성사
-    //    1. 거래상태 before_deal 인지 확인
-    //    2. 수신계좌들 검증
-    //    3. 최종 예치금 확인해서 차액만큼 가용금액 플러스
-    //    4. 수신자 계좌번호 거래에 묶기
-    //    5. 거래상태 b로 변경
-    //    6. 거래ID 반환
-    @Transactional
-    public APIResponse<Long> completeDeal(DealRequestDTO.completeDeal dto) {
-        // 거래 검증 및 거래 상태 BEFORE_DEAL 인지 검증
-        Deal deal = this.validateDeal(dto.getDealId(), List.of(BEFORE_DEAL));
 
+    /**
+     * 거래 성사
+     * 1. 거래ID로 존재여부 + 거래상태 검증
+     * 2. 수신계좌들 검증
+     * 3. 최종 예치금 확인해서 차액만큼 가용금액 플러스
+     * 4. 수신자 계좌번호 거래에 묶기
+     * 5. 거래상태 b로 변경
+     * 6. 거래ID 반환
+     * @param dto
+     * @return
+     */
+    @Transactional
+    public APIResponse<?> completeDeal(DealRequestDTO.completeDeal dto) {
+        // 거래 검증 및 거래 상태 BEFORE_DEAL 인지 검증
+        Deal deal = validateDeal(dto.getDealId(), List.of(BEFORE_DEAL));
         List<String> receiverAccountNumbers = List.of(dto.getReceiverAccountNumbers());
         Long realPeopleNum = (long) receiverAccountNumbers.size();
 
         // 송신계좌 검증 및 잔액 확인
-        Account senderAccount = accountService.matchAccountPassword(deal.getSenderAccount().getAccountNumber(), dto.getPassword());
+        Account senderAccount =
+                accountService.matchAccountPassword(deal.getSenderAccount().getAccountNumber(), dto.getPassword());
 
         // 최대 모집인원 - 최종 모집인원 * 예치금 만큼 다시 가용금액 플러스
-        Long diff = deal.getDeposit() * (deal.getMaxPeopleNum() - realPeopleNum);
-        senderAccount.setAvailableBudget(senderAccount.getAvailableBudget() + diff);
+        Long diff = calculateDeposit(deal.getDeposit(), deal.getMaxPeopleNum() - realPeopleNum);
+
+        accountService.changeAvailableBudget(senderAccount, diff, INCREASE);
 
         // 수신자 계좌번호 검증하면서 DealReceiver로 만들어서 저장
-        for (String receiverAccountNumber : receiverAccountNumbers) {
+        receiverAccountNumbers.forEach(accountNumber -> {
             dealReceiverRepository.save(
-                    DealReceiver.builder()
-                            .deal(deal)
-                            .receiverAccount(accountService.validateAccount(receiverAccountNumber))
-                            .build()
+                    DealReceiver.initializeDealReceiver(deal, accountService.validateAccount(accountNumber))
             );
-        }
+        });
 
         // 거래상태 after_deal 로 변경
         deal.setStatus(AFTER_DEAL);
@@ -97,100 +98,51 @@ public class DealService {
         return APIResponse.of(SuccessCode.INSERT_SUCCESS, dealRepository.save(deal).getId());
     }
 
-    // 거래ID로 존재여부 + 거래상태 검증
-    private Deal validateDeal(Long dealId, List<String> status) {
-        Deal deal = dealRepository.findById(dealId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 거래입니다."));
-
-        if (!status.contains(deal.getStatus())) {
-            throw new IllegalArgumentException("거래 상태가 올바르지 않습니다.");
-        }
-
-        return deal;
-    }
-
-    // 거래 수정
-    //    1. 거래 ID 확인
-    //    2. 송금자 계좌 검증
-    //    3. 비밀번호 검증
-    //    4. 거래 상태 확인
-    //    5. 예치금 수정 및 송신자 계좌에 가용금액 플러스
-    //    6. 거래 인원수 수정
-    //    7. after_deal 일 경우 dealReceiver 삭제
-    //    8. 거래 상태 a로 변경
-    //    9. 거래ID 반환
+    /**
+     * 거래 수정
+     * 1. 거래 rollback
+     * 2. 거래 인원수 수정
+     * 3. after_deal 일 경우 dealReceiver 삭제
+     * 4. 거래 상태 BEFORE_DEAL 로 변경
+     * 5. 거래ID 반환
+     * @param dto
+     * @return
+     */
     @Transactional
-    public APIResponse<Long> updateDeal(DealRequestDTO.updateDeal dto) {
+    public APIResponse<?> updateDeal(DealRequestDTO.updateDeal dto) {
         // 거래ID로 존재여부 + 거래상태 검증
-        Deal deal = this.validateDeal(dto.getDealId(), List.of(BEFORE_DEAL, AFTER_DEAL));
+        Deal deal = rollbackDeal(dto.getDealId(), dto.getSenderAccountNumber(), dto.getPassword());
 
-        // 송금자 계좌 검증
-        Account senderAccount = accountService.validateAccount(dto.getSenderAccountNumber());
-
-        // 비밀번호 검증
-        if (!passwordEncoder.matches(dto.getPassword(), senderAccount.getPassword())) {
-            throw new IllegalArgumentException("비밀번호가 올바르지 않습니다.");
-        }
-
-        // 거래 상태가 AFTER_DEAL 일 경우 체결 후이기 때문에 실제 지원자수 * 예치금만큼 가용금액 플러스
-        // 거래 상태가 BEFORE_DEAL 일 경우 체결 전이기 최대 지원자수 * 예치금만큼 가용금액 플러스
-        if (deal.getStatus().equals(AFTER_DEAL)) {
-            senderAccount.setAvailableBudget(deal.getDeposit() * deal.getRealPeopleNum() + senderAccount.getAvailableBudget());
-            dealReceiverRepository.deleteByDeal(deal);
-        }else if (deal.getStatus().equals(BEFORE_DEAL)){
-            senderAccount.setAvailableBudget(deal.getDeposit() * deal.getMaxPeopleNum() + senderAccount.getAvailableBudget());
-        }
+        //계좌 검증
+        Account senderAccount = accountService.matchAccountPassword(dto.getSenderAccountNumber(), dto.getPassword());
 
         // 예치금 수정 및 송신자 계좌에 가용금액 마이너스
+        Long finalDeposit = calculateDeposit(dto.getDeposit(), dto.getNumberOfPeople());
+
         // 송신자 계좌에 가용금액 마이너스
-        Long finalDeposit = dto.getDeposit() * dto.getNumberOfPeople();
-        if (senderAccount.getAvailableBudget() < finalDeposit) {
-            throw new IllegalArgumentException("잔액이 부족합니다.");
-        }
-        senderAccount.setAvailableBudget(senderAccount.getAvailableBudget() - finalDeposit);
+        accountService.changeAvailableBudget(senderAccount, finalDeposit, DECREASE);
 
-        // 예치금 수정
+        // 예치금 수정 거래 인원수 수정 거래 상태 before_deal 로 변경
         deal.setDeposit(dto.getDeposit());
-        // 거래 인원수 수정
         deal.setMaxPeopleNum(dto.getNumberOfPeople());
-
-        // 거래 상태 before_deal 로 변경
         deal.setStatus(BEFORE_DEAL);
 
         return APIResponse.of(SuccessCode.UPDATE_SUCCESS, dealRepository.save(deal).getId());
     }
 
-    // 거래 취소
-    //    1. 거래 ID 확인
-    //    2. 송금자 계좌 검증
-    //    3. 비밀번호 검증
-    //    4. 거래 상태 확인
-    //    5. 거래 상태 after_deal 일 경우 dealReceiver 삭제
-    //    6. 송신자 계좌에 가용금액 플러스
-    //    7. 거래 상태 c로 변경
-    //    8. 거래ID 반환
+    /**
+     * 거래 취소
+     * 1. 거래 rollback
+     * 2. 거래 상태 cancel_deal 로 변경
+     * 3. 거래ID 반환
+     *
+     * @param dto
+     * @return
+     */
     @Transactional
-    public APIResponse<Long> cancelDeal(DealRequestDTO.cancelDeal dto) {
+    public APIResponse<?> cancelDeal(DealRequestDTO.cancelDeal dto) {
         // 거래ID로 존재여부 + 거래상태 검증
-        Deal deal = this.validateDeal(dto.getDealId(), List.of(BEFORE_DEAL, AFTER_DEAL));
-
-        // 송금자 계좌 검증
-        Account senderAccount = accountService.validateAccount(dto.getSenderAccountNumber());
-
-        // 비밀번호 검증
-        if (!passwordEncoder.matches(dto.getPassword(), senderAccount.getPassword())) {
-            throw new IllegalArgumentException("비밀번호가 올바르지 않습니다.");
-        }
-
-        // 거래 상태가 AFTER_DEAL 일 경우 실제 지원자수 * 예치금만큼 가용금액 플러스
-        // 거래 상태가 BEFORE_DEAL 일 경우 최대 지원자수 * 예치금만큼 가용금액 플러스
-        if (deal.getStatus().equals(AFTER_DEAL)) {
-            senderAccount.setAvailableBudget(deal.getDeposit() * deal.getRealPeopleNum() + senderAccount.getAvailableBudget());
-            dealReceiverRepository.deleteByDeal(deal);
-        }else if (deal.getStatus().equals(BEFORE_DEAL)){
-            senderAccount.setAvailableBudget(deal.getDeposit() * deal.getMaxPeopleNum() + senderAccount.getAvailableBudget());
-        }
-
+        Deal deal = rollbackDeal(dto.getDealId(), dto.getSenderAccountNumber(), dto.getPassword());
 
         // 거래 상태 cancel_deal 로 변경
         deal.setStatus(CANCEL_DEAL);
@@ -213,29 +165,60 @@ public class DealService {
         Deal deal = this.validateDeal(dto.getDealId(), List.of(AFTER_DEAL));
 
         // 반환할 거래내역 리스트 생성
-        List<TotalTransferHistoryResponseDTO.GetTotalTransferHistory> totalTransferHistoryIds = new java.util.ArrayList<>(List.of());
+        List<TotalTransferHistoryResponseDTO.GetTotalTransferHistory> totalTransferHistoryIds =
+                new java.util.ArrayList<>(List.of());
 
         // 수신계좌들에 자유송금
         List<DealReceiver> dealReceivers = dealReceiverRepository.findAllByDeal(deal);
 
-        for (DealReceiver dealReceiver : dealReceivers) {
-
-            AccountResponseDTO.transfer transfer = AccountResponseDTO.transfer.builder()
-                    .senderAccountNumber(deal.getSenderAccount().getAccountNumber())
-                    .receiverAccountNumber(dealReceiver.getReceiverAccount().getAccountNumber())
-                    .amount(deal.getDeposit())
-                    .password(dto.getPassword())
-                    .transferType(BATCH_TYPE)
-                    .build();
+        dealReceivers.forEach(dealReceiver -> {
+            AccountResponseDTO.transfer transfer = AccountResponseDTO.transfer
+                    .batchTransfer(deal, dealReceiver.getReceiverAccount().getAccountNumber(), dto.getPassword());
 
             totalTransferHistoryIds.add(
                     accountService.transfer(transfer)
             );
-        }
+        });
 
         // 거래 상태 done_deal 로 변경
         deal.setStatus(DONE_DEAL);
 
         return APIResponse.of(SuccessCode.UPDATE_SUCCESS, totalTransferHistoryIds);
     }
+
+    public Long calculateDeposit(Long deposit, Long peopleCnt) {
+        return deposit * peopleCnt;
+    }
+
+    // 거래ID로 존재여부 + 거래상태 검증
+    private Deal validateDeal(Long dealId, List<String> status) {
+        Deal deal = dealRepository.findById(dealId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 거래입니다."));
+
+        if (!status.contains(deal.getStatus())) {
+            throw new IllegalArgumentException("거래 상태가 올바르지 않습니다.");
+        }
+
+        return deal;
+    }
+
+    public Deal rollbackDeal(Long dealId, String accountNumber, String password) {
+        // 거래ID로 존재여부 + 거래상태 검증
+        Deal deal = this.validateDeal(dealId, List.of(BEFORE_DEAL, AFTER_DEAL));
+
+        // 송금자 계좌 검증
+        Account senderAccount = accountService.matchAccountPassword(accountNumber, password);
+
+        // 거래 상태가 AFTER_DEAL 일 경우 실제 지원자수 * 예치금만큼 가용금액 플러스
+        // 거래 상태가 BEFORE_DEAL 일 경우 최대 지원자수 * 예치금만큼 가용금액 플러스
+        if (deal.getStatus().equals(AFTER_DEAL)) {
+            accountService.changeAvailableBudget(senderAccount, deal.getDeposit() * deal.getRealPeopleNum(), INCREASE);
+            dealReceiverRepository.deleteByDeal(deal);
+        }else if (deal.getStatus().equals(BEFORE_DEAL)){
+            accountService.changeAvailableBudget(senderAccount, deal.getDeposit() * deal.getMaxPeopleNum(), INCREASE);
+        }
+
+        return deal;
+    }
+
 }

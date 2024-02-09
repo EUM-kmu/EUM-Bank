@@ -26,4 +26,11 @@ public class DealReceiver extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "account_number")
     private Account receiverAccount;
+
+    public static DealReceiver initializeDealReceiver(Deal deal, Account account) {
+        return DealReceiver.builder()
+                .deal(deal)
+                .receiverAccount(account)
+                .build();
+    }
 }
