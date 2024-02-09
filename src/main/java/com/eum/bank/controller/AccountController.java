@@ -7,6 +7,7 @@ import com.eum.bank.common.dto.response.TotalTransferHistoryResponseDTO;
 import com.eum.bank.common.enums.SuccessCode;
 import com.eum.bank.service.AccountService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,7 @@ public class AccountController {
      * @return
      */
     @Operation(summary = "계좌 생성", description = "계좌를 생성합니다.")
+    @Parameter(name = "CreateAccount", description = "계좌 생성 요청", required = true)
     @PostMapping
     public ResponseEntity<?> create(@RequestBody AccountRequestDTO.CreateAccount createAccount) {
 
@@ -38,6 +40,7 @@ public class AccountController {
 
     // 계좌 조회
     @Operation(summary = "계좌 조회", description = "계좌를 조회합니다.")
+    @Parameter(name = "GetAccount", description = "계좌 조회 요청", required = true)
     @GetMapping
     public ResponseEntity<?> getAccountInfo(@RequestBody AccountRequestDTO.GetAccount getAccountInfo) {
         String accountNumber = getAccountInfo.getAccountNumber();
@@ -50,6 +53,7 @@ public class AccountController {
 
     // 자유 송금
     @Operation(summary = "자유 송금", description = "자유 송금을 합니다.")
+    @Parameter(name = "Transfer", description = "자유 송금 요청", required = true)
     @PostMapping("/transfer")
     public ResponseEntity<?> transfer(@RequestBody AccountRequestDTO.Transfer transfer) {
         AccountResponseDTO.transfer transferResponse = AccountResponseDTO.transfer.builder()

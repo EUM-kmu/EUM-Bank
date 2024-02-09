@@ -9,7 +9,7 @@ public class DealRequestDTO {
     @Schema(description = "거래 생성 요청")
     @Builder
     @Getter
-    public static class createDeal{
+    public static class CreateDeal{
         // 송금자 계좌번호
         @Schema(description = "송금자 계좌번호")
         private String accountNumber;
@@ -29,7 +29,7 @@ public class DealRequestDTO {
 
     @Schema(description = "거래 성사 요청")
     @Getter
-    public static class completeDeal{
+    public static class CompleteDeal{
         // 거래ID
         @Schema(description = "거래ID")
         @NotEmpty(message = "거래ID를 입력해주세요.")
@@ -46,7 +46,7 @@ public class DealRequestDTO {
 
     @Schema(description = "거래 수정 요청")
     @Getter
-    public static class updateDeal{
+    public static class UpdateDeal{
         // 거래ID
         @Schema(description = "거래ID")
         @NotEmpty(message = "거래ID를 입력해주세요.")
@@ -71,7 +71,7 @@ public class DealRequestDTO {
 
     @Schema(description = "거래 취소 요청")
     @Getter
-    public static class cancelDeal{
+    public static class CancelDeal{
         // 거래ID
         @Schema(description = "거래ID")
         @NotEmpty(message = "거래ID를 입력해주세요.")
@@ -88,7 +88,7 @@ public class DealRequestDTO {
 
 
     @Getter
-    public static class executeDeal{
+    public static class ExecuteDeal{
         // 거래ID
         @Schema(description = "거래ID")
         @NotEmpty(message = "거래ID를 입력해주세요.")

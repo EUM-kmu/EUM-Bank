@@ -50,7 +50,7 @@ public class Deal extends BaseEntity {
     @Column(name = "post_id", nullable = false)
     private Long postId;
 
-    public static Deal initializeDeal(Account account,DealRequestDTO.createDeal createDeal) {
+    public static Deal initializeDeal(Account account,DealRequestDTO.CreateDeal createDeal) {
         return Deal.builder()
                 .senderAccount(account)
                 .status(BEFORE_DEAL)

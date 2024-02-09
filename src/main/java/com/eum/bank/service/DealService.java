@@ -40,7 +40,7 @@ public class DealService {
      * @return
      */
     @Transactional
-    public APIResponse<?> createDeal(DealRequestDTO.createDeal createDeal) {
+    public APIResponse<?> createDeal(DealRequestDTO.CreateDeal createDeal) {
 
         Account account = accountService.matchAccountPassword(createDeal.getAccountNumber(), createDeal.getPassword());
 
@@ -69,7 +69,7 @@ public class DealService {
      * @return
      */
     @Transactional
-    public APIResponse<?> completeDeal(DealRequestDTO.completeDeal dto) {
+    public APIResponse<?> completeDeal(DealRequestDTO.CompleteDeal dto) {
         // 거래 검증 및 거래 상태 BEFORE_DEAL 인지 검증
         Deal deal = validateDeal(dto.getDealId(), List.of(BEFORE_DEAL));
         List<String> receiverAccountNumbers = List.of(dto.getReceiverAccountNumbers());
@@ -109,7 +109,7 @@ public class DealService {
      * @return
      */
     @Transactional
-    public APIResponse<?> updateDeal(DealRequestDTO.updateDeal dto) {
+    public APIResponse<?> updateDeal(DealRequestDTO.UpdateDeal dto) {
         // 거래ID로 존재여부 + 거래상태 검증
         Deal deal = rollbackDeal(dto.getDealId(), dto.getSenderAccountNumber(), dto.getPassword());
 
@@ -140,7 +140,7 @@ public class DealService {
      * @return
      */
     @Transactional
-    public APIResponse<?> cancelDeal(DealRequestDTO.cancelDeal dto) {
+    public APIResponse<?> cancelDeal(DealRequestDTO.CancelDeal dto) {
         // 거래ID로 존재여부 + 거래상태 검증
         Deal deal = rollbackDeal(dto.getDealId(), dto.getSenderAccountNumber(), dto.getPassword());
 
@@ -160,7 +160,7 @@ public class DealService {
      * @return
      */
     @Transactional
-    public APIResponse<?> executeDeal(DealRequestDTO.executeDeal dto) {
+    public APIResponse<?> executeDeal(DealRequestDTO.ExecuteDeal dto) {
         // 거래ID로 존재여부 + 거래상태 검증
         Deal deal = this.validateDeal(dto.getDealId(), List.of(AFTER_DEAL));
 
