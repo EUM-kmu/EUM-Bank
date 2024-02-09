@@ -2,6 +2,7 @@ package com.eum.bank.common.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
+import lombok.Builder;
 import lombok.Getter;
 
 public class AccountRequestDTO {
@@ -28,6 +29,7 @@ public class AccountRequestDTO {
     }
 
     @Schema(description = "자유 송금 요청")
+    @Builder
     @Getter
     public static class Transfer {
         @Schema(description = "계좌 번호")
@@ -46,5 +48,6 @@ public class AccountRequestDTO {
         @Schema(description = "수신 계좌 번호")
         @NotEmpty(message = "송금할 계좌 번호를 입력해주세요.")
         private String receiverAccountNumber;
+
     }
 }

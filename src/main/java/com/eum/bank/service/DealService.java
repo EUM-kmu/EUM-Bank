@@ -172,7 +172,7 @@ public class DealService {
         List<DealReceiver> dealReceivers = dealReceiverRepository.findAllByDeal(deal);
 
         dealReceivers.forEach(dealReceiver -> {
-            AccountResponseDTO.transfer transfer = AccountResponseDTO.transfer
+            AccountResponseDTO.Transfer transfer = AccountResponseDTO.Transfer
                     .batchTransfer(deal, dealReceiver.getReceiverAccount().getAccountNumber(), dto.getPassword());
 
             totalTransferHistoryIds.add(

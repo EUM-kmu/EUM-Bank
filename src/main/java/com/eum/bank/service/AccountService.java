@@ -54,7 +54,7 @@ public class AccountService {
      * 5. 통합 거래내역 생성, 각 계좌 거래내역 생성
      */
     @Transactional
-    public TotalTransferHistoryResponseDTO.GetTotalTransferHistory transfer(AccountResponseDTO.transfer transfer) {
+    public TotalTransferHistoryResponseDTO.GetTotalTransferHistory transfer(AccountResponseDTO.Transfer transfer) {
 
         Long amount = transfer.getAmount();
         String password = transfer.getPassword();

@@ -1,5 +1,6 @@
 package com.eum.bank.common.dto.response;
 
+import com.eum.bank.common.dto.request.AccountRequestDTO;
 import com.eum.bank.domain.account.entity.Account;
 import com.eum.bank.domain.deal.entity.Deal;
 import jakarta.validation.constraints.NotEmpty;
@@ -8,6 +9,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import static com.eum.bank.common.Constant.BATCH_TYPE;
+import static com.eum.bank.common.Constant.FREE_TYPE;
 
 public class AccountResponseDTO {
     // 계좌 생성 응답
@@ -41,22 +43,30 @@ public class AccountResponseDTO {
 
     @Builder
     @Getter
-    public static class transfer {
+    public static class Transfer {
         private String senderAccountNumber;
         private String receiverAccountNumber;
         private Long amount;
         private String password;
         private String transferType;
 
-        public static transfer batchTransfer(Deal deal, String receiverAccountNumber, String password){
-            return transfer.builder()
+        public static Transfer freeTransfer(AccountRequestDTO.Transfer requestTransfer){
+            return AccountResponseDTO.Transfer.builder()
+                    .senderAccountNumber(requestTransfer.getAccountNumber())
+                    .receiverAccountNumber(requestTransfer.getReceiverAccountNumber())
+                    .amount(requestTransfer.getAmount())
+                    .password(requestTransfer.getPassword())
+                    .transferType(FREE_TYPE)
+                    .build();
+        }
+        public static Transfer batchTransfer(Deal deal, String receiverAccountNumber, String password){
+            return Transfer.builder()
                     .senderAccountNumber(deal.getSenderAccount().getAccountNumber())
                     .receiverAccountNumber(receiverAccountNumber)
                     .amount(deal.getDeposit())
                     .password(password)
                     .transferType(BATCH_TYPE)
                     .build();
-
         }
     }
 }
