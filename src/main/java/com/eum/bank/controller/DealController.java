@@ -1,17 +1,25 @@
 package com.eum.bank.controller;
 
 import com.eum.bank.common.APIResponse;
+import com.eum.bank.common.ErrorResponse;
 import com.eum.bank.common.dto.request.DealRequestDTO;
 import com.eum.bank.common.dto.response.DealResponseDTO;
+import com.eum.bank.common.dto.response.DealResponseDTO.createDeal;
+import com.eum.bank.common.dto.response.TotalTransferHistoryResponseDTO;
 import com.eum.bank.domain.account.entity.Account;
 import com.eum.bank.service.AccountService;
 import com.eum.bank.service.DealService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Tag(name = "거래", description = "거래 API")
 @RestController
@@ -21,68 +29,58 @@ public class DealController {
     private final DealService dealService;
 
     @Operation(summary = "거래 생성", description = "거래를 생성합니다.")
-    @Parameter(
-            name = "CreateDeal",
-            description = "거래 생성 요청",
-            required = true,
-            schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DealRequestDTO.CreateDeal.class)
-    )
+    @ApiResponse(responseCode = "201", description = "거래 생성 성공")
+    @ApiResponse(responseCode = "400", description = "거래 생성 실패", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody DealRequestDTO.CreateDeal create) {
-        APIResponse<?> response = dealService.createDeal(create);
+    public ResponseEntity<APIResponse<DealResponseDTO.createDeal>> create(
+            @Schema(description = "거래 생성 정보", required = true, implementation = DealRequestDTO.CreateDeal.class)
+            @RequestBody DealRequestDTO.CreateDeal create) {
+        APIResponse<DealResponseDTO.createDeal> response = dealService.createDeal(create);
         
         return ResponseEntity.ok(response);
     }
 
     // 거래 성사
     @Operation(summary = "거래 성사", description = "거래를 성사합니다. 거래 성사란 모집인원이 모두 모이거나 제시한 사람이 요청인이 완료를 누른 경우 입니다.")
-    @Parameter(
-            name = "CompleteDeal",
-            description = "거래 성사 요청",
-            required = true,
-            schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DealRequestDTO.CompleteDeal.class)
-    )
+    @ApiResponse(responseCode = "201", description = "거래 성사 성공")
+    @ApiResponse(responseCode = "400", description = "거래 성사 실패", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @PostMapping("/success")
-    public ResponseEntity<?> success(@RequestBody DealRequestDTO.CompleteDeal success) {
-        return ResponseEntity.ok(dealService.completeDeal(success));
+    public ResponseEntity<APIResponse<DealResponseDTO.createDeal>> success(
+            @Schema(description = "거래 성사 정보", required = true, implementation = DealRequestDTO.CompleteDeal.class)
+            @RequestBody DealRequestDTO.CompleteDeal success) {
+        return ResponseEntity.status(201).body((dealService.completeDeal(success)));
     }
 
     // 거래 수정
     @Operation(summary = "거래 수정", description = "거래를 수정합니다.")
-    @Parameter(
-            name = "UpdateDeal",
-            description = "거래 수정 요청",
-            required = true,
-            schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DealRequestDTO.UpdateDeal.class)
-    )
+    @ApiResponse(responseCode = "200", description = "거래 수정 성공")
+    @ApiResponse(responseCode = "400", description = "거래 수정 실패", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @PatchMapping
-    public ResponseEntity<?> update(@RequestBody DealRequestDTO.UpdateDeal update) {
+    public ResponseEntity<APIResponse<DealResponseDTO.createDeal>> update(
+            @Schema(description = "거래 수정 정보", required = true, implementation = DealRequestDTO.UpdateDeal.class)
+            @RequestBody DealRequestDTO.UpdateDeal update) {
         return ResponseEntity.ok(dealService.updateDeal(update));
     }
 
     // 거래 취소
     @Operation(summary = "거래 취소", description = "거래를 취소합니다.")
-    @Parameter(
-            name = "CancelDeal",
-            description = "거래 취소 요청",
-            required = true,
-            schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DealRequestDTO.CancelDeal.class)
-    )
+    @ApiResponse(responseCode = "200", description = "거래 취소 성공")
+    @ApiResponse(responseCode = "400", description = "거래 취소 실패", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @DeleteMapping
-    public ResponseEntity<?> cancel(@RequestBody DealRequestDTO.CancelDeal cancel) {
+    public ResponseEntity<APIResponse<DealResponseDTO.createDeal>> cancel(
+            @Schema(description = "거래 취소 정보", required = true, implementation = DealRequestDTO.CancelDeal.class)
+            @RequestBody DealRequestDTO.CancelDeal cancel) {
         return ResponseEntity.ok(dealService.cancelDeal(cancel));
     }
 
     // 거래 수행
     @Operation(summary = "거래 수행", description = "거래를 수행합니다. 일괄 송금하기")
-    @Parameter(
-            name = "ExecuteDeal",
-            description = "거래 수행 요청",
-            required = true,
-            schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = DealRequestDTO.ExecuteDeal.class)
-    )
+    @ApiResponse(responseCode = "200", description = "거래 수행 성공")
+    @ApiResponse(responseCode = "400", description = "거래 수행 실패", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     @PostMapping("/execute")
-    public ResponseEntity<?> execute(@RequestBody DealRequestDTO.ExecuteDeal execute) {
+    public ResponseEntity<APIResponse<List<TotalTransferHistoryResponseDTO.GetTotalTransferHistory>>> execute(
+            @Schema(description = "거래 수행 정보", required = true, implementation = DealRequestDTO.ExecuteDeal.class)
+            @RequestBody DealRequestDTO.ExecuteDeal execute) {
         return ResponseEntity.ok(dealService.executeDeal(execute));
     }
 }

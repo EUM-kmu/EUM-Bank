@@ -4,6 +4,7 @@ import com.eum.bank.common.APIResponse;
 import com.eum.bank.common.dto.request.DealRequestDTO;
 import com.eum.bank.common.dto.response.AccountResponseDTO;
 import com.eum.bank.common.dto.response.DealResponseDTO;
+import com.eum.bank.common.dto.response.DealResponseDTO.createDeal;
 import com.eum.bank.common.dto.response.TotalTransferHistoryResponseDTO;
 import com.eum.bank.common.enums.SuccessCode;
 import com.eum.bank.domain.account.entity.Account;
@@ -40,7 +41,7 @@ public class DealService {
      * @return
      */
     @Transactional
-    public APIResponse<?> createDeal(DealRequestDTO.CreateDeal createDeal) {
+    public APIResponse<DealResponseDTO.createDeal> createDeal(DealRequestDTO.CreateDeal createDeal) {
 
         Account account = accountService.matchAccountPassword(createDeal.getAccountNumber(), createDeal.getPassword());
 
@@ -69,7 +70,7 @@ public class DealService {
      * @return
      */
     @Transactional
-    public APIResponse<?> completeDeal(DealRequestDTO.CompleteDeal dto) {
+    public APIResponse<DealResponseDTO.createDeal> completeDeal(DealRequestDTO.CompleteDeal dto) {
         // 거래 검증 및 거래 상태 BEFORE_DEAL 인지 검증
         Deal deal = validateDeal(dto.getDealId(), List.of(BEFORE_DEAL));
         List<String> receiverAccountNumbers = List.of(dto.getReceiverAccountNumbers());
@@ -94,8 +95,8 @@ public class DealService {
         // 거래상태 after_deal 로 변경
         deal.setStatus(AFTER_DEAL);
         deal.setRealPeopleNum(realPeopleNum);
-
-        return APIResponse.of(SuccessCode.INSERT_SUCCESS, dealRepository.save(deal).getId());
+        DealResponseDTO.createDeal response = new DealResponseDTO.createDeal(dealRepository.save(deal).getId());
+        return APIResponse.of(SuccessCode.INSERT_SUCCESS, response);
     }
 
     /**
@@ -109,7 +110,7 @@ public class DealService {
      * @return
      */
     @Transactional
-    public APIResponse<?> updateDeal(DealRequestDTO.UpdateDeal dto) {
+    public APIResponse<DealResponseDTO.createDeal> updateDeal(DealRequestDTO.UpdateDeal dto) {
         // 거래ID로 존재여부 + 거래상태 검증
         Deal deal = rollbackDeal(dto.getDealId(), dto.getSenderAccountNumber(), dto.getPassword());
 
@@ -127,7 +128,8 @@ public class DealService {
         deal.setMaxPeopleNum(dto.getNumberOfPeople());
         deal.setStatus(BEFORE_DEAL);
 
-        return APIResponse.of(SuccessCode.UPDATE_SUCCESS, dealRepository.save(deal).getId());
+        DealResponseDTO.createDeal response = new DealResponseDTO.createDeal(dealRepository.save(deal).getId());
+        return APIResponse.of(SuccessCode.UPDATE_SUCCESS, response);
     }
 
     /**
@@ -140,14 +142,15 @@ public class DealService {
      * @return
      */
     @Transactional
-    public APIResponse<?> cancelDeal(DealRequestDTO.CancelDeal dto) {
+    public APIResponse<DealResponseDTO.createDeal> cancelDeal(DealRequestDTO.CancelDeal dto) {
         // 거래ID로 존재여부 + 거래상태 검증
         Deal deal = rollbackDeal(dto.getDealId(), dto.getSenderAccountNumber(), dto.getPassword());
 
         // 거래 상태 cancel_deal 로 변경
         deal.setStatus(CANCEL_DEAL);
 
-        return APIResponse.of(SuccessCode.DELETE_SUCCESS, dealRepository.save(deal).getId());
+        DealResponseDTO.createDeal response = new DealResponseDTO.createDeal(dealRepository.save(deal).getId());
+        return APIResponse.of(SuccessCode.DELETE_SUCCESS, response);
     }
 
     /**
@@ -160,7 +163,7 @@ public class DealService {
      * @return
      */
     @Transactional
-    public APIResponse<?> executeDeal(DealRequestDTO.ExecuteDeal dto) {
+    public APIResponse<List<TotalTransferHistoryResponseDTO.GetTotalTransferHistory>> executeDeal(DealRequestDTO.ExecuteDeal dto) {
         // 거래ID로 존재여부 + 거래상태 검증
         Deal deal = this.validateDeal(dto.getDealId(), List.of(AFTER_DEAL));
 

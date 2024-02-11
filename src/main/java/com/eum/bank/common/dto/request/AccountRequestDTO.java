@@ -10,7 +10,7 @@ public class AccountRequestDTO {
     @Schema(description = "계좌 생성 요청")
     @Getter
     public static class CreateAccount {
-        @Schema(description = "비밀번호")
+        @Schema(description = "비밀번호", example = "1234")
         @NotEmpty(message = "비밀번호를 입력해주세요.")
         private String password;
     }
@@ -19,11 +19,11 @@ public class AccountRequestDTO {
     @Schema(description = "계좌 조회 요청")
     @Getter
     public static class GetAccount {
-        @Schema(description = "계좌 번호")
+        @Schema(description = "계좌 번호", example = "123456789012")
         @NotEmpty(message = "계좌 번호를 입력해주세요.")
         private String accountNumber;
 
-        @Schema(description = "비밀번호")
+        @Schema(description = "비밀번호", example = "1234")
         @NotEmpty(message = "비밀번호를 입력해주세요.")
         private String password;
     }
@@ -32,20 +32,20 @@ public class AccountRequestDTO {
     @Builder
     @Getter
     public static class Transfer {
-        @Schema(description = "계좌 번호")
+        @Schema(description = "계좌 번호", example = "123456789012")
         @NotEmpty(message = "계좌 번호를 입력해주세요.")
         private String accountNumber;
 
-        @Schema(description = "비밀번호")
+        @Schema(description = "비밀번호", example = "1234")
         @NotEmpty(message = "비밀번호를 입력해주세요.")
         private String password;
 
-        @Schema(description = "송금 금액")
+        @Schema(description = "송금 금액", example = "10000")
         @NotEmpty(message = "송금 금액을 입력해주세요.")
         private Long amount;
 
         // 수신자 계좌 번호
-        @Schema(description = "수신 계좌 번호")
+        @Schema(description = "수신 계좌 번호", example = "123456789012")
         @NotEmpty(message = "송금할 계좌 번호를 입력해주세요.")
         private String receiverAccountNumber;
 
