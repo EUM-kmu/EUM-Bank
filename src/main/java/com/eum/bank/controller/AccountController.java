@@ -6,6 +6,8 @@ import com.eum.bank.common.dto.response.AccountResponseDTO;
 import com.eum.bank.common.dto.response.TotalTransferHistoryResponseDTO;
 import com.eum.bank.common.enums.SuccessCode;
 import com.eum.bank.service.AccountService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +27,8 @@ public class AccountController {
      * @param createAccount
      * @return
      */
+    @Operation(summary = "계좌 생성", description = "계좌를 생성합니다.")
+    @Parameter(name = "CreateAccount", description = "계좌 생성 요청", required = true, schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = AccountRequestDTO.CreateAccount.class))
     @PostMapping
     public ResponseEntity<?> create(@RequestBody AccountRequestDTO.CreateAccount createAccount) {
 
@@ -35,6 +39,13 @@ public class AccountController {
     }
 
     // 계좌 조회
+    @Operation(summary = "계좌 조회", description = "계좌를 조회합니다.")
+    @Parameter(
+            name = "GetAccount",
+            description = "계좌 조회 요청",
+            required = true,
+            schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = AccountRequestDTO.GetAccount.class)
+    )
     @GetMapping
     public ResponseEntity<?> getAccountInfo(@RequestBody AccountRequestDTO.GetAccount getAccountInfo) {
         String accountNumber = getAccountInfo.getAccountNumber();
@@ -46,15 +57,16 @@ public class AccountController {
     }
 
     // 자유 송금
+    @Operation(summary = "자유 송금", description = "자유 송금을 합니다.")
+    @Parameter(
+            name = "Transfer",
+            description = "자유 송금 요청",
+            required = true,
+            schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = AccountRequestDTO.Transfer.class)
+    )
     @PostMapping("/transfer")
     public ResponseEntity<?> transfer(@RequestBody AccountRequestDTO.Transfer transfer) {
-        AccountResponseDTO.transfer transferResponse = AccountResponseDTO.transfer.builder()
-                .senderAccountNumber(transfer.getAccountNumber())
-                .receiverAccountNumber(transfer.getReceiverAccountNumber())
-                .amount(transfer.getAmount())
-                .password(transfer.getPassword())
-                .transferType(FREE_TYPE)
-                .build();
+        AccountResponseDTO.Transfer transferResponse = AccountResponseDTO.Transfer.freeTransfer(transfer);
 
         TotalTransferHistoryResponseDTO.GetTotalTransferHistory response = accountService.transfer(transferResponse);
         return ResponseEntity.ok(APIResponse.of(SuccessCode.INSERT_SUCCESS, response));

@@ -40,6 +40,16 @@ public final class Constant {
      */
     public static final String DONE_DEAL = "done_deal";
 
+    /**
+     * 금약 증가
+     */
+    public static final String INCREASE = "increase";
+
+    /**
+     * 금액 감소
+     */
+    public static final String DECREASE = "decrease";
+
     private Constant() {
     }
 

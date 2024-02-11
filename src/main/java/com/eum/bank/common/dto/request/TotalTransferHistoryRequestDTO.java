@@ -3,6 +3,7 @@ package com.eum.bank.common.dto.request;
 import com.eum.bank.domain.account.entity.Account;
 import com.eum.bank.domain.account.entity.TotalTransferHistory;
 import jakarta.validation.constraints.NotEmpty;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -10,6 +11,7 @@ public class TotalTransferHistoryRequestDTO {
 
     @Getter
     @Builder
+    @AllArgsConstructor
     public static class CreateTotalTransferHistory {
         @NotEmpty(message = "송금자 계좌를 입력해주세요.")
         private Account senderAccount;
@@ -29,5 +31,7 @@ public class TotalTransferHistoryRequestDTO {
                     .transferType(transferType)
                     .build();
         }
+
+
     }
 }

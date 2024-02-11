@@ -1,8 +1,6 @@
 package com.eum.bank.service;
 
 import com.eum.bank.common.APIResponse;
-import com.eum.bank.common.dto.request.AccountTransferHistoryRequestDTO;
-import com.eum.bank.common.dto.request.TotalTransferHistoryRequestDTO;
 import com.eum.bank.common.dto.response.AccountResponseDTO;
 import com.eum.bank.common.dto.response.TotalTransferHistoryResponseDTO;
 import com.eum.bank.common.enums.SuccessCode;
@@ -17,8 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.Random;
 
-import static com.eum.bank.common.Constant.ACCOUNT_NUMBER_LENGTH;
-import static com.eum.bank.common.Constant.FREE_TYPE;
+import static com.eum.bank.common.Constant.*;
 
 @Service
 @RequiredArgsConstructor
@@ -30,40 +27,71 @@ public class AccountService {
     private final AccountTransferHistoryService accountTransferHistoryService;
     private final TotalTransferHistoryService totalTransferHistoryService;
 
+    /**
+     * 계좌 생성
+     * @param password
+     * @return
+     */
     public APIResponse<?> createAccount(String password) {
 
-        String accountNumber;
-        do {
-            accountNumber = generateAccountNumber();
-        }while (
-                !validateAccountNumber(accountNumber)
-        );
+        String accountNumber = this.generateAccountNumber();
 
-        Account account = Account.builder()
-                .accountNumber(accountNumber)
-                .password(passwordEncoder.encode(password))
-                .totalBudget(0L)
-                .availableBudget(0L)
-                .isBlocked(false)
-                .build();
+        Account account = Account.initializeAccount(accountNumber, passwordEncoder.encode(password));
 
         accountRepository.save(account);
 
-        AccountResponseDTO.Create response = AccountResponseDTO.Create.builder()
-                .accountNumber(account.getAccountNumber())
-                .build();
+        AccountResponseDTO.Create response = new AccountResponseDTO.Create(account.getAccountNumber());
 
         return APIResponse.of(SuccessCode.SELECT_SUCCESS, response);
     }
 
+    /**
+     * 자유 송금
+     * 1. 송금자 계좌, 수신자 계좌 상태 검증
+     * 2. 송금자 잔액 확인
+     * 3. 송금자 전체금액, 가용금액 마이너스
+     * 4. 수신자 전체금액, 가용금액 플러스
+     * 5. 통합 거래내역 생성, 각 계좌 거래내역 생성
+     */
+    @Transactional
+    public TotalTransferHistoryResponseDTO.GetTotalTransferHistory transfer(AccountResponseDTO.Transfer transfer) {
+
+        Long amount = transfer.getAmount();
+        String password = transfer.getPassword();
+        String transferType = transfer.getTransferType();
+
+        Account senderAccount = matchAccountPassword(transfer.getSenderAccountNumber(), password);
+        Account receiverAccount = validateAccount(transfer.getReceiverAccountNumber());
+
+        // 송금자 잔액 검증
+        validatePayment(senderAccount, amount);
+
+        // 송금자 잔액 마이너스
+        changeBudget(senderAccount, amount, DECREASE);
+
+        // 수신자 잔액 플러스
+        changeBudget(receiverAccount, amount, INCREASE);
+
+        // 통합 거래내역 생성
+        TotalTransferHistory response = totalTransferHistoryService.generateTotalHistory(senderAccount, receiverAccount, amount, transferType);
+
+        accountTransferHistoryService.generateAccountHistory(senderAccount, receiverAccount, amount, transferType);
+
+        return TotalTransferHistoryResponseDTO.GetTotalTransferHistory.fromEntity(response);
+    }
+
     public String generateAccountNumber() {
         Random random = new Random();
-        StringBuilder uniqueNumber = new StringBuilder();
+        StringBuilder uniqueNumber;
 
-        for (int i = 0; i < ACCOUNT_NUMBER_LENGTH; i++) {
-            int digit = random.nextInt(10);
-            uniqueNumber.append(digit);
-        }
+        do {
+            uniqueNumber = new StringBuilder();
+            for (int i = 0; i < ACCOUNT_NUMBER_LENGTH; i++) {
+                int digit = random.nextInt(10);
+                uniqueNumber.append(digit);
+            }
+
+        } while (accountRepository.findByAccountNumber(uniqueNumber.toString()).isPresent());
 
         return uniqueNumber.toString();
     }
@@ -88,7 +116,7 @@ public class AccountService {
         return account;
     }
 
-    // 계좌번호 와 비밀번호로 계좌 조회
+    // 계좌번호 와 비밀번호 매치
     public Account matchAccountPassword(String accountNumber, String password) {
         Account account = this.validateAccount(accountNumber);
 
@@ -111,74 +139,6 @@ public class AccountService {
                 .build());
     }
 
-    /**
-     * 자유 송금
-     * 1. 송금자 계좌, 수신자 계좌 상태 검증
-     * 2. 송금자 잔액 확인
-     * 3. 송금자 전체금액, 가용금액 마이너스
-     * 4. 수신자 전체금액, 가용금액 플러스
-     * 5. 통합 거래내역 생성, 각 계좌 거래내역 생성
-     */
-    @Transactional
-    public TotalTransferHistoryResponseDTO.GetTotalTransferHistory transfer(AccountResponseDTO.transfer transfer) {
-
-        String senderAccountNumber = transfer.getSenderAccountNumber();
-        String receiverAccountNumber = transfer.getReceiverAccountNumber();
-        Long amount = transfer.getAmount();
-        String password = transfer.getPassword();
-        String transferType = transfer.getTransferType();
-
-
-        Account senderAccount = this.matchAccountPassword(senderAccountNumber, password);
-        Account receiverAccount = this.validateAccount(receiverAccountNumber);
-
-        // 송금자 잔액 검증
-        this.validatePayment(senderAccount, amount);
-
-        // 송금자 잔액 마이너스
-        senderAccount.setAvailableBudget(senderAccount.getAvailableBudget() - amount);
-
-        senderAccount.setTotalBudget(senderAccount.getTotalBudget() - amount);
-
-        // 수신자 잔액 플러스
-        receiverAccount.setTotalBudget(receiverAccount.getTotalBudget() + amount);
-        receiverAccount.setAvailableBudget(receiverAccount.getAvailableBudget() + amount);
-
-        // 통합 거래내역 생성
-        TotalTransferHistory response = totalTransferHistoryService.save(
-                TotalTransferHistoryRequestDTO.CreateTotalTransferHistory.builder()
-                        .senderAccount(senderAccount)
-                        .receiverAccount(receiverAccount)
-                        .transferAmount(amount)
-                        .transferType(transferType)
-                        .build()
-        );
-
-        // 각 계좌 거래내역 생성
-        accountTransferHistoryService.save(
-                AccountTransferHistoryRequestDTO.CreateAccountTransferHistory.builder()
-                        .ownerAccount(senderAccount)
-                        .oppenentAccount(receiverAccount)
-                        .transferAmount(amount)
-                        .transferType(transferType)
-                        .budgetAfterTransfer(senderAccount.getAvailableBudget())
-                        .memo("")
-                        .build()
-        );
-
-        accountTransferHistoryService.save(
-                AccountTransferHistoryRequestDTO.CreateAccountTransferHistory.builder()
-                        .ownerAccount(receiverAccount)
-                        .oppenentAccount(senderAccount)
-                        .transferAmount(-amount)
-                        .transferType(transferType)
-                        .budgetAfterTransfer(receiverAccount.getAvailableBudget())
-                        .memo("")
-                        .build()
-        );
-
-        return TotalTransferHistoryResponseDTO.GetTotalTransferHistory.fromEntity(response);
-    }
 
     /**
      * 지불 능력 판단
@@ -196,8 +156,14 @@ public class AccountService {
      * @param account
      * @param amount
      */
-    public void changeTotalBudget(Account account, Long amount) {
+    public void changeBudget(Account account, Long amount, String transferType) {
+        if(transferType.equals(DECREASE)){
+            validatePayment(account, amount);
+            amount = -amount;
+        }
+
         account.setTotalBudget(account.getTotalBudget() + amount);
+        account.setAvailableBudget(account.getAvailableBudget() + amount);
     }
 
     /**
@@ -205,7 +171,12 @@ public class AccountService {
      * @param account
      * @param amount
      */
-    public void changeAvailableBudget(Account account, Long amount) {
+    public void changeAvailableBudget(Account account, Long amount, String transferType) {
+        if(transferType.equals(DECREASE)){
+            validatePayment(account, amount);
+            amount = -amount;
+        }
+
         account.setAvailableBudget(account.getAvailableBudget() + amount);
     }
 }

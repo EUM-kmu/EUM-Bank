@@ -34,4 +34,15 @@ public class Account extends BaseEntity {
     // 블락 여부
     @Column(name = "is_blocked", nullable = false)
     private Boolean isBlocked;
+
+    public static Account initializeAccount(String accountNumber, String password) {
+        return Account.builder()
+                .accountNumber(accountNumber)
+                .password(password)
+                .totalBudget(0L)
+                .availableBudget(0L)
+                .isBlocked(false)
+                .build();
+    }
+
 }
