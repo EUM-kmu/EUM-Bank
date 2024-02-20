@@ -32,7 +32,7 @@ public class AccountService {
      * @param password
      * @return
      */
-    public APIResponse<?> createAccount(String password) {
+    public APIResponse<AccountResponseDTO.Create> createAccount(String password) {
 
         String accountNumber = this.generateAccountNumber();
 
@@ -42,7 +42,7 @@ public class AccountService {
 
         AccountResponseDTO.Create response = new AccountResponseDTO.Create(account.getAccountNumber());
 
-        return APIResponse.of(SuccessCode.SELECT_SUCCESS, response);
+        return APIResponse.of(SuccessCode.INSERT_SUCCESS, response);
     }
 
     /**
@@ -129,7 +129,7 @@ public class AccountService {
     }
 
     // 계좌번호와 비밀번호로 계좌 조회
-    public APIResponse<?> getAccount(String accountNumber, String password) {
+    public APIResponse<AccountResponseDTO.AccountInfo> getAccount(String accountNumber, String password) {
         Account account = this.matchAccountPassword(accountNumber, password);
 
         return APIResponse.of(SuccessCode.SELECT_SUCCESS, AccountResponseDTO.AccountInfo.builder()
