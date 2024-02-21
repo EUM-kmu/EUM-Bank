@@ -6,6 +6,9 @@ import com.eum.bank.common.dto.response.TotalTransferHistoryResponseDTO;
 import com.eum.bank.common.enums.SuccessCode;
 import com.eum.bank.domain.account.entity.Account;
 import com.eum.bank.domain.account.entity.TotalTransferHistory;
+import com.eum.bank.exception.BlockAccountException;
+import com.eum.bank.exception.InsufficientAmountException;
+import com.eum.bank.exception.WrongPasswordException;
 import com.eum.bank.repository.AccountRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -111,7 +114,7 @@ public class AccountService {
                 .orElseThrow(() -> new IllegalArgumentException("Invalid account number : " + accountNumber));
 
         if(account.getIsBlocked()){
-            throw new IllegalArgumentException("Blocked account : " + accountNumber);
+            throw new BlockAccountException("Blocked account : " + accountNumber);
         }
         return account;
     }
@@ -122,7 +125,7 @@ public class AccountService {
 
         // 비밀번호 검증
         if (!passwordEncoder.matches(password, account.getPassword())) {
-            throw new IllegalArgumentException("Invalid password");
+            throw new WrongPasswordException("Invalid password");
         }
 
         return account;
@@ -147,7 +150,7 @@ public class AccountService {
      */
     public void validatePayment(Account account, Long amount) {
         if (account.getAvailableBudget() < amount) {
-            throw new IllegalArgumentException("Invalid amount");
+            throw new InsufficientAmountException("Invalid amount");
         }
     }
 
