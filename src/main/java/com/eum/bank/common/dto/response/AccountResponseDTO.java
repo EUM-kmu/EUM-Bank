@@ -70,4 +70,10 @@ public class AccountResponseDTO {
                     .build();
         }
     }
+
+    @Builder
+    @Getter
+    public static class Block {
+        private String accountNumber;
+    }
 }

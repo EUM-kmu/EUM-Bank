@@ -100,4 +100,24 @@ public class AccountController {
         return ResponseEntity.ok(APIResponse.of(SuccessCode.INSERT_SUCCESS, response));
     }
 
+    // 계좌 동결
+    @Operation(summary = "계좌 동결", description = "계좌를 동결합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "성공"),
+            @ApiResponse(responseCode = "400", description = "요청 형식 혹은 요청 콘텐츠가 올바르지 않을 때,",content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "비밀번호 인증 에러 또는 거래상태 비적합",content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "402", description = "금액 부족",content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "block된 계좌", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "서버 에러", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PatchMapping("/block")
+    public ResponseEntity<APIResponse<AccountResponseDTO.Block>> blockAccount(
+            @Schema(description = "계좌 번호", required = true)
+            @RequestParam
+            String accountNumber
+    ) throws IllegalAccessException {
+        AccountResponseDTO.Block response = accountService.blockAccount(accountNumber);
+        return ResponseEntity.ok(APIResponse.of(SuccessCode.UPDATE_SUCCESS, response));
+    }
+
 }
