@@ -10,6 +10,7 @@ import com.eum.bank.common.enums.SuccessCode;
 import com.eum.bank.domain.account.entity.Account;
 import com.eum.bank.domain.deal.entity.Deal;
 import com.eum.bank.domain.deal.entity.DealReceiver;
+import com.eum.bank.exception.InvalidStatusException;
 import com.eum.bank.repository.DealReceiverRepository;
 import com.eum.bank.repository.DealRepository;
 import lombok.RequiredArgsConstructor;
@@ -199,7 +200,7 @@ public class DealService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 거래입니다."));
 
         if (!status.contains(deal.getStatus())) {
-            throw new IllegalArgumentException("거래 상태가 올바르지 않습니다.");
+            throw new InvalidStatusException("올바르지 않은 거래 상태입니다.");
         }
 
         return deal;

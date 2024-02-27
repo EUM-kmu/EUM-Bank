@@ -44,3 +44,7 @@ public class AccountTransferHistory extends BaseEntity {
     @Column(name = "memo", nullable = false)
     private String memo;
 }
+
+
+
+// [김재용] 111-2240582-1034
