@@ -13,7 +13,7 @@ import lombok.*;
 public class TotalTransferHistory extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     // 송신자 계좌
