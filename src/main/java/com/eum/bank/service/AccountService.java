@@ -182,4 +182,21 @@ public class AccountService {
 
         account.setAvailableBudget(account.getAvailableBudget() + amount);
     }
+
+    /**
+     * 계좌 동결
+     * @param accountNumber
+     * 아직 자세한 로직 없이 계좌번호 받아서 동결 기능
+     * @return
+     */
+    public AccountResponseDTO.Block blockAccount(String accountNumber) {
+        Account account = this.validateAccount(accountNumber);
+
+        account.setIsBlocked(true);
+
+        return AccountResponseDTO.Block.builder()
+                .accountNumber(account.getAccountNumber())
+                .build();
+
+    }
 }
