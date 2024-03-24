@@ -51,10 +51,19 @@ public class DealService {
         // 가용금액 마이너스
         accountService.changeAvailableBudget(account, finalDeposit, DECREASE);
 
-        // 거래 생성 후 저장 후 거래ID 반환
-        Long dealId = dealRepository.save(Deal.initializeDeal(account, createDeal)).getId();
 
-        DealResponseDTO.createDeal response = new DealResponseDTO.createDeal(dealId);
+
+        // 거래 생성 후 저장 후 거래ID 반환
+        Deal deal = dealRepository.save(Deal.initializeDeal(account, createDeal));
+
+        DealResponseDTO.createDeal response = DealResponseDTO.createDeal.builder()
+                .dealId(deal.getId())
+                .senderAccountNumber(deal.getSenderAccount().getAccountNumber())
+                .status(deal.getStatus())
+                .deposit(deal.getDeposit())
+                .maxPeopleNum(deal.getMaxPeopleNum())
+                .postId(deal.getPostId())
+                .build();
 
         return APIResponse.of(SuccessCode.INSERT_SUCCESS, response);
     }
@@ -96,7 +105,15 @@ public class DealService {
         // 거래상태 after_deal 로 변경
         deal.setStatus(AFTER_DEAL);
         deal.setRealPeopleNum(realPeopleNum);
-        DealResponseDTO.createDeal response = new DealResponseDTO.createDeal(dealRepository.save(deal).getId());
+        DealResponseDTO.createDeal response = DealResponseDTO.createDeal.builder()
+                .dealId(deal.getId())
+                .senderAccountNumber(deal.getSenderAccount().getAccountNumber())
+                .status(deal.getStatus())
+                .deposit(deal.getDeposit())
+                .maxPeopleNum(deal.getMaxPeopleNum())
+                .realPeopleNum(deal.getRealPeopleNum())
+                .postId(deal.getPostId())
+                .build();
         return APIResponse.of(SuccessCode.INSERT_SUCCESS, response);
     }
 
@@ -115,6 +132,11 @@ public class DealService {
         // 거래ID로 존재여부 + 거래상태 검증
         Deal deal = rollbackDeal(dto.getDealId(), dto.getSenderAccountNumber(), dto.getPassword());
 
+        // deal의 상태가 before_deal일 경우만 수정가능
+        if (!deal.getStatus().equals(BEFORE_DEAL)) {
+            throw new InvalidStatusException("올바르지 않은 거래 상태입니다.");
+        }
+
         //계좌 검증
         Account senderAccount = accountService.matchAccountPassword(dto.getSenderAccountNumber(), dto.getPassword());
 
@@ -127,9 +149,15 @@ public class DealService {
         // 예치금 수정 거래 인원수 수정 거래 상태 before_deal 로 변경
         deal.setDeposit(dto.getDeposit());
         deal.setMaxPeopleNum(dto.getNumberOfPeople());
-        deal.setStatus(BEFORE_DEAL);
 
-        DealResponseDTO.createDeal response = new DealResponseDTO.createDeal(dealRepository.save(deal).getId());
+        DealResponseDTO.createDeal response = DealResponseDTO.createDeal.builder()
+                .dealId(deal.getId())
+                .senderAccountNumber(deal.getSenderAccount().getAccountNumber())
+                .status(deal.getStatus())
+                .deposit(deal.getDeposit())
+                .maxPeopleNum(deal.getMaxPeopleNum())
+                .postId(deal.getPostId())
+                .build();
         return APIResponse.of(SuccessCode.UPDATE_SUCCESS, response);
     }
 
@@ -150,7 +178,14 @@ public class DealService {
         // 거래 상태 cancel_deal 로 변경
         deal.setStatus(CANCEL_DEAL);
 
-        DealResponseDTO.createDeal response = new DealResponseDTO.createDeal(dealRepository.save(deal).getId());
+        DealResponseDTO.createDeal response = DealResponseDTO.createDeal.builder()
+                .dealId(deal.getId())
+                .senderAccountNumber(deal.getSenderAccount().getAccountNumber())
+                .status(deal.getStatus())
+                .deposit(deal.getDeposit())
+                .maxPeopleNum(deal.getMaxPeopleNum())
+                .postId(deal.getPostId())
+                .build();
         return APIResponse.of(SuccessCode.DELETE_SUCCESS, response);
     }
 
@@ -174,6 +209,10 @@ public class DealService {
 
         // 수신계좌들에 자유송금
         List<DealReceiver> dealReceivers = dealReceiverRepository.findAllByDeal(deal);
+
+        // 수신계좌 수 * deposit 만큼 availableBudget 증가
+        int numOfReceivers = dealReceivers.size();
+        accountService.changeAvailableBudget(deal.getSenderAccount(), deal.getDeposit() * numOfReceivers, INCREASE);
 
         dealReceivers.forEach(dealReceiver -> {
             AccountResponseDTO.Transfer transfer = AccountResponseDTO.Transfer

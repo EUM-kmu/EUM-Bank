@@ -14,7 +14,7 @@ import lombok.*;
 public class DealReceiver extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     // 거래 ID
