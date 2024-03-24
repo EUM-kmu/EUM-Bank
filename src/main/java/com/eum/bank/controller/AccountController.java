@@ -73,7 +73,7 @@ public class AccountController {
             @Parameter(description = "비밀번호", required = true)
             @RequestParam
             String password
-    ) throws IllegalAccessException {
+    ) {
 
         APIResponse<AccountResponseDTO.AccountInfo> response = accountService.getAccount(accountNumber, password);
 
@@ -93,7 +93,7 @@ public class AccountController {
     @PostMapping("/transfer")
     public ResponseEntity<APIResponse<TotalTransferHistoryResponseDTO.GetTotalTransferHistory>> transfer(
             @Schema(description = "송금 정보", required = true, implementation = AccountRequestDTO.Transfer.class)
-            @RequestBody AccountRequestDTO.Transfer transfer) throws IllegalAccessException {
+            @RequestBody AccountRequestDTO.Transfer transfer) {
         AccountResponseDTO.Transfer transferResponse = AccountResponseDTO.Transfer.freeTransfer(transfer);
 
         TotalTransferHistoryResponseDTO.GetTotalTransferHistory response = accountService.transfer(transferResponse);

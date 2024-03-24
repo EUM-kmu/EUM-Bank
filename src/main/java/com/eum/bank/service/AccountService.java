@@ -149,7 +149,7 @@ public class AccountService {
      * @param amount
      */
     public void validatePayment(Account account, Long amount) {
-        if (account.getAvailableBudget() < amount) {
+        if (account.getAvailableBudget() < amount && account.getTotalBudget() < amount) {
             throw new InsufficientAmountException("Invalid amount");
         }
     }

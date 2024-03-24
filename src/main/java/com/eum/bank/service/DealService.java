@@ -210,6 +210,10 @@ public class DealService {
         // 수신계좌들에 자유송금
         List<DealReceiver> dealReceivers = dealReceiverRepository.findAllByDeal(deal);
 
+        // 수신계좌 수 * deposit 만큼 availableBudget 증가
+        int numOfReceivers = dealReceivers.size();
+        accountService.changeAvailableBudget(deal.getSenderAccount(), deal.getDeposit() * numOfReceivers, INCREASE);
+
         dealReceivers.forEach(dealReceiver -> {
             AccountResponseDTO.Transfer transfer = AccountResponseDTO.Transfer
                     .batchTransfer(deal, dealReceiver.getReceiverAccount().getAccountNumber(), dto.getPassword());
