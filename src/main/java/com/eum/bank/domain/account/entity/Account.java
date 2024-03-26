@@ -39,8 +39,8 @@ public class Account extends BaseEntity {
         return Account.builder()
                 .accountNumber(accountNumber)
                 .password(password)
-                .totalBudget(0L)
-                .availableBudget(0L)
+                .totalBudget(300L)
+                .availableBudget(300L)
                 .isBlocked(false)
                 .build();
     }
