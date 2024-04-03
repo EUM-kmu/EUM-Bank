@@ -6,6 +6,7 @@ import com.eum.bank.common.dto.request.DealRequestDTO;
 import com.eum.bank.common.dto.response.DealResponseDTO;
 import com.eum.bank.common.dto.response.DealResponseDTO.createDeal;
 import com.eum.bank.common.dto.response.TotalTransferHistoryResponseDTO;
+import com.eum.bank.common.enums.SuccessCode;
 import com.eum.bank.domain.account.entity.Account;
 import com.eum.bank.service.AccountService;
 import com.eum.bank.service.DealService;
@@ -104,9 +105,27 @@ public class DealController {
             @ApiResponse(responseCode = "500", description = "서버 에러", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping("/execute")
-    public ResponseEntity<APIResponse<List<TotalTransferHistoryResponseDTO.GetTotalTransferHistory>>> execute(
+    public ResponseEntity<APIResponse> execute(
             @Schema(description = "거래 수행 정보", required = true, implementation = DealRequestDTO.ExecuteDeal.class)
             @RequestBody DealRequestDTO.ExecuteDeal execute) {
-        return ResponseEntity.ok(dealService.executeDeal(execute));
+        dealService.executeDeal(execute);
+        return ResponseEntity.ok(APIResponse.of(SuccessCode.UPDATE_SUCCESS));
+    }
+
+    // 거래 상태 모집완료 -> 모집중 변경
+    @Operation(summary = "거래 상태 변경", description = "거래 상태를 변경합니다. 모집완료 -> 모집중 변경")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "성공"),
+            @ApiResponse(responseCode = "400", description = "요청 형식 혹은 요청 콘텐츠가 올바르지 않을 때,",content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "비밀번호 인증 에러 또는 거래상태 비적합",content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "block된 계좌", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "500", description = "서버 에러", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PatchMapping("/rollback")
+    public ResponseEntity<APIResponse> rollback(
+            @Schema(description = "거래 상태 변경 정보", required = true, implementation = DealRequestDTO.RollbackDeal.class)
+            @RequestBody DealRequestDTO.RollbackDeal rollback) {
+        dealService.changeDealToBeforeDeal(rollback);
+        return ResponseEntity.ok(APIResponse.of(SuccessCode.UPDATE_SUCCESS));
     }
 }

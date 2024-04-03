@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.Builder;
 
+import java.util.List;
+
 public class DealRequestDTO {
     @Schema(description = "거래 생성 요청")
     @Builder
@@ -101,6 +103,43 @@ public class DealRequestDTO {
         @Schema(description = "비밀번호", example = "1234")
         @NotEmpty(message = "비밀번호를 입력해주세요.")
         private String password;
+
+        // 수신 계좌번호 및 금액 리스트
+        @Schema(description = "수신 계좌번호 및 금액 리스트")
+        @NotEmpty(message = "수신 계좌번호 및 금액을 입력해주세요.")
+        private List<ReceiverAndAmount> receiverAndAmounts;
+
+        // 송금 총액
+        @Schema(description = "송금 총액", example = "10000")
+        @NotEmpty(message = "송금 총액을 입력해주세요.")
+        private Long totalAmount;
     }
 
+    @Getter
+    public static class ReceiverAndAmount{
+        // 수신 계좌번호
+        @Schema(description = "수신 계좌번호", example = "123456789012")
+        @NotEmpty(message = "수신 계좌번호를 입력해주세요.")
+        private String receiverAccountNumber;
+        // 금액
+        @Schema(description = "금액", example = "10000")
+        @NotEmpty(message = "금액을 입력해주세요.")
+        private Long amount;
+    }
+
+    @Getter
+    public static class RollbackDeal {
+        // 거래ID
+        @Schema(description = "거래ID", example = "1")
+        @NotEmpty(message = "거래ID를 입력해주세요.")
+        private Long dealId;
+        // 송금자 계좌번호
+        @Schema(description = "송금자 계좌번호", example = "123456789012")
+        @NotEmpty(message = "송금자 계좌번호를 입력해주세요.")
+        private String senderAccountNumber;
+        // 비밀번호
+        @Schema(description = "비밀번호", example = "1234")
+        @NotEmpty(message = "비밀번호를 입력해주세요.")
+        private String password;
+    }
 }
