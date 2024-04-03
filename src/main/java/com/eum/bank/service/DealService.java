@@ -270,7 +270,7 @@ public class DealService {
         // 거래 상태가 AFTER_DEAL 일 경우 실제 지원자수 * 예치금만큼 가용금액 플러스
         // 거래 상태가 BEFORE_DEAL 일 경우 최대 지원자수 * 예치금만큼 가용금액 플러스
         if (deal.getStatus().equals(AFTER_DEAL)) {
-            accountService.changeAvailableBudget(senderAccount, deal.getDeposit() * deal.getRealPeopleNum(), INCREASE);
+            accountService.changeAvailableBudget(senderAccount, deal.getDeposit() * deal.getMaxPeopleNum(), INCREASE);
             dealReceiverRepository.deleteByDeal(deal);
         }else if (deal.getStatus().equals(BEFORE_DEAL)){
             accountService.changeAvailableBudget(senderAccount, deal.getDeposit() * deal.getMaxPeopleNum(), INCREASE);
