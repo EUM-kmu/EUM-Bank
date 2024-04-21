@@ -19,6 +19,7 @@ public class AccountResponseDTO {
     public static class Create {
         @NotEmpty(message = "계좌 번호가 생성되어야 합니다.")
         private String accountNumber;
+
     }
 
     // 계좌 조회 응답
@@ -68,5 +69,11 @@ public class AccountResponseDTO {
                     .transferType(BATCH_TYPE)
                     .build();
         }
+    }
+
+    @Builder
+    @Getter
+    public static class Block {
+        private String accountNumber;
     }
 }
