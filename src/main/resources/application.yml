@@ -33,11 +33,11 @@ spring:
         strategy: org.hibernate.cfg.ImprovedNamingStrategy
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
 
-  eureka:
-    client:
-      register-with-eureka: true
-      fetch-registry: true
-      service-url:
-        defaultZone: ${EUREKA_SERVICE_URL}
-    instance:
-      instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: ${EUREKA_SERVICE_URL}
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
