@@ -88,6 +88,9 @@ public enum ErrorCode {
     // 거래의 상태가 유효하지 않음
     INVALID_DEAL_STATUS(400, "G019", "Invalid Transaction Status Exception"),
 
+    // 유효하지 않은 QR code
+    INVALID_QR_CODE(400, "G019", "Invalid QR Code Exception"),
+
     ; // End
 
     /**
