@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface AccountTransferHistoryRepository extends JpaRepository<AccountTransferHistory, Long> {
-    List<AccountTransferHistory> findByOwnerAccount_AccountNumber(String senderAccountId);
+    List<AccountTransferHistory> findByOwnerAccount_AccountNumberOrderByIdDesc(String senderAccountId);
 }

@@ -51,7 +51,7 @@ public class AccountTransferHistoryService {
 
         switch (dto.getType()){
             case ALL:
-                transferHistories = accountTransferHistoryRepository.findByOwnerAccount_AccountNumber(dto.getAccountId());
+                transferHistories = accountTransferHistoryRepository.findByOwnerAccount_AccountNumberOrderByIdDesc(dto.getAccountId());
                 break;
 //            case SEND:
 //                transferHistories = accountTransferHistoryRepository.findBySenderAccount_AccountNumber(dto.getAccountId());
