@@ -49,5 +49,16 @@ public class AccountRequestDTO {
         @NotEmpty(message = "송금할 계좌 번호를 입력해주세요.")
         private String receiverAccountNumber;
 
+        public static AccountRequestDTO.Transfer fromHMAC(String data) {
+
+            String[] parts = data.split("%");
+
+            return Transfer.builder()
+                    .accountNumber(parts[0])
+                    .password(parts[1])
+                    .amount(Long.parseLong(parts[2]))
+                    .receiverAccountNumber(parts[3])
+                    .build();
+        }
     }
 }

@@ -3,6 +3,9 @@ app:
   qr:
     key: ${QR_KEY}
     algorithm: ${QR_ALGORITHM}
+  remittance:
+     key: ${REMIT_KEY}
+     algorithm: ${REMIT_ALGORITHM}
 
 haetsal-url: ${HAETSAL_URL}
 

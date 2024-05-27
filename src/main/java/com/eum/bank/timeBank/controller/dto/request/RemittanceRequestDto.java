@@ -13,17 +13,14 @@ public class RemittanceRequestDto {
     @Builder
     @Getter
     public static class QRRemittance {
-        @Schema(description = "보내는 사람 account Id", example = "123456789012")
+        @Schema(description = "hash-based mac", example = "")
         @NotEmpty
-        private String senderAccountId;
+        private String hmac;
 
-        @Schema(description = "보내는 금액", example = "60")
+        @Schema(description = "원본 데이터", example = "<accountNumber>%<password>%<amount>%<receiverAccountNumber>")
         @NotEmpty
-        private int amount;
+        private String remittanceInfo;
 
-        @Schema(description = "받는 사람 account Id", example = "123456789012")
-        @NotEmpty
-        private String receiverAccountId;
     }
 
     @Schema(description = "특정 계좌의 거래 내역 보기")

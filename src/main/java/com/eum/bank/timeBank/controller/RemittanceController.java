@@ -1,27 +1,25 @@
 package com.eum.bank.timeBank.controller;
 
 import com.eum.bank.common.APIResponse;
-import com.eum.bank.common.ErrorResponse;
 import com.eum.bank.common.dto.request.AccountRequestDTO;
 import com.eum.bank.common.dto.response.AccountResponseDTO;
 import com.eum.bank.common.dto.response.TotalTransferHistoryResponseDTO;
+import com.eum.bank.common.enums.ErrorCode;
 import com.eum.bank.common.enums.SuccessCode;
 import com.eum.bank.service.AccountService;
 import com.eum.bank.service.AccountTransferHistoryService;
 import com.eum.bank.timeBank.controller.dto.request.RemittanceRequestDto;
-import com.eum.bank.timeBank.controller.dto.response.TransactionHistoryResponseDto;
+import com.eum.bank.timeBank.service.ValidateService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 
 @Controller
 @RequiredArgsConstructor
@@ -31,15 +29,24 @@ public class RemittanceController {
 
     private final AccountService accountService;
     private final AccountTransferHistoryService accountTransferHistoryService;
+    private final ValidateService validateService;
 
     // 송금
-    @Operation(summary = "자유 송금", description = "자유 송금을 합니다.")
+    @Operation(summary = "QR 송금", description = "QR 송금을 합니다.")
     @PostMapping("/qr")
     public ResponseEntity<APIResponse<TotalTransferHistoryResponseDTO.GetTotalTransferHistory>> QRRemittance(
             @Schema(description = "송금 요청", required = true)
             @RequestHeader String userId,
-            @RequestBody AccountRequestDTO.Transfer transfer
-    ) {
+            @RequestBody RemittanceRequestDto.QRRemittance dto
+    ) throws NoSuchAlgorithmException, InvalidKeyException {
+
+        boolean isValid = validateService.hmacRemittance(dto);
+
+        if(!isValid){
+            return ResponseEntity.ok(APIResponse.of(ErrorCode.INVALID_DEAL_STATUS, "인증되지 않은 송금 요청입니다."));
+        }
+
+        AccountRequestDTO.Transfer transfer = AccountRequestDTO.Transfer.fromHMAC(dto.getRemittanceInfo());
 
         AccountResponseDTO.Transfer transferResponse = AccountResponseDTO.Transfer.freeTransfer(transfer);
 
