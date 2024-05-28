@@ -9,6 +9,7 @@ import com.eum.bank.common.enums.SuccessCode;
 import com.eum.bank.service.AccountService;
 import com.eum.bank.service.AccountTransferHistoryService;
 import com.eum.bank.timeBank.controller.dto.request.RemittanceRequestDto;
+import com.eum.bank.timeBank.domain.TransactionType;
 import com.eum.bank.timeBank.service.ValidateService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -59,9 +60,12 @@ public class RemittanceController {
     @Operation(summary = "특정 계좌의 거래 내역 확인", description = "거래 내역을 확인합니다.")
     @PostMapping("/history")
     public ResponseEntity<APIResponse> getHistory(
+            @Schema(description = "보낸 거래/받은 거래만 보기용 필터.  " +
+                    "\n아무것도 입력하지 않으면 전체 리스트를 반환합니다.")
+            @RequestParam(value = "type", required = false) TransactionType type,
             @RequestBody RemittanceRequestDto.History dto
     ) {
 
-        return ResponseEntity.ok(accountTransferHistoryService.getUserHistory(dto));
+        return ResponseEntity.ok(accountTransferHistoryService.getUserHistory(type, dto));
     }
 }

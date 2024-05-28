@@ -10,6 +10,7 @@ import com.eum.bank.repository.AccountRepository;
 import com.eum.bank.repository.AccountTransferHistoryRepository;
 import com.eum.bank.timeBank.client.HaetsalClient;
 import com.eum.bank.timeBank.client.HaetsalResponseDto;
+import com.eum.bank.timeBank.domain.TransactionType;
 import com.eum.bank.timeBank.domain.User;
 import com.eum.bank.timeBank.controller.dto.request.RemittanceRequestDto;
 import com.eum.bank.timeBank.controller.dto.response.TransactionHistoryResponseDto;
@@ -50,7 +51,7 @@ public class AccountTransferHistoryService {
         accountTransferHistoryRepository.save(dto.toEntity());
     }
 
-    public APIResponse getUserHistory(RemittanceRequestDto.History dto) {
+    public APIResponse getUserHistory(TransactionType type, RemittanceRequestDto.History dto) {
 
         if(accountRepository.findByAccountNumber(dto.getAccountId()).isEmpty()){
             return APIResponse.of(ErrorCode.INVALID_PARAMETER, "존재하지 않는 계좌번호입니다.");
@@ -75,10 +76,10 @@ public class AccountTransferHistoryService {
             User user = new User(userInfo.getNickName(), userInfo.getProfileImage());
 
             if (history.getTransferAmount() < 0) { // 내가 보낸 경우
-                if(dto.getType() == RECEIVE)   continue;
+                if(type == RECEIVE)   continue;
                 list.add(TransactionHistoryResponseDto.RemittanceList.receiverInfoFrom(history, user));
             } else { // 내가 받은 경우
-                if(dto.getType() == SEND)   continue;
+                if(type == SEND)   continue;
                 list.add(TransactionHistoryResponseDto.RemittanceList.senderInfoFrom(history, user));
             }
         }

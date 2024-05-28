@@ -27,10 +27,6 @@ public class RemittanceRequestDto {
     @Getter
     public static class History {
 
-        @Schema(description = "보기 옵션", example = "ALL :전체 내역보기, SEND :보낸 내역만 보기, RECEIVE :받은 내역만 보기")
-        @NotEmpty
-        private TransactionType type;
-
         @Schema(description = "계좌 id", example = "123456789012")
         @NotEmpty
         private String accountId;
