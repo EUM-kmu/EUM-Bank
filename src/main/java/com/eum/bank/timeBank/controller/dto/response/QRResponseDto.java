@@ -1,6 +1,6 @@
 package com.eum.bank.timeBank.controller.dto.response;
 
-import com.eum.bank.timeBank.client.HaetsalProfileResponse;
+import com.eum.bank.timeBank.client.HaetsalResponseDto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Builder;
@@ -50,7 +50,7 @@ public class QRResponseDto {
         @NotEmpty
         private Long senderBalance;
 
-        public static ScannedData from(String receiverAccountId, HaetsalProfileResponse.Data userInfo, Long senderBalance){
+        public static ScannedData from(String receiverAccountId, HaetsalResponseDto.Profile userInfo, Long senderBalance){
             return ScannedData.builder()
                     .receiverAccountId(receiverAccountId)
                     .receiverNickname(userInfo.getNickName())

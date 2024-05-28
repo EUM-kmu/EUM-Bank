@@ -9,5 +9,5 @@ import org.springframework.web.bind.annotation.RequestHeader;
 public interface HaetsalClient {
 
     @GetMapping("/haetsal-service/api/v2/profile")
-    HaetsalProfileResponse getProfile(@RequestHeader String userId);
+    HaetsalResponseDto.ProfileResponseBody getProfile(@RequestHeader String userId);
 }

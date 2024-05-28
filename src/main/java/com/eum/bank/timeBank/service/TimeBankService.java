@@ -7,7 +7,7 @@ import com.eum.bank.common.enums.SuccessCode;
 import com.eum.bank.domain.account.entity.Account;
 import com.eum.bank.service.AccountService;
 import com.eum.bank.timeBank.client.HaetsalClient;
-import com.eum.bank.timeBank.client.HaetsalProfileResponse;
+import com.eum.bank.timeBank.client.HaetsalResponseDto;
 import com.eum.bank.timeBank.controller.dto.response.AccountResponseDto;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
@@ -27,10 +27,23 @@ public class TimeBankService {
     public APIResponse<AccountResponseDTO.AccountInfo> currentAccount(String userId) {
 
         try {
-            HaetsalProfileResponse.Data data = haetsalClient.getProfile(userId).getData();
-            Account account = accountService.validateAccount(data.getAccountNumber());
+            HaetsalResponseDto. ProfileResponseBody profileResponseBody = haetsalClient.getProfile(userId);
+            boolean isSuccess = profileResponseBody.getResponseBody().getCode().startsWith("2");
+            if(!isSuccess){
+                log.error("Cannot get profile from Haetsal-Service: " +
+                        "\nresultMsg: {}, reason: {}" +
+                        "\nError Caused by userId: {}",
+                        profileResponseBody.getResponseBody().getDetailMsg(), profileResponseBody.getResponseBody().getReason(), userId);
+                return APIResponse.of(ErrorCode.INTERNAL_SERVER_ERROR,
+                        "resultMsg: " + profileResponseBody.getResponseBody().getDetailMsg() +
+                        ", reason: " + profileResponseBody.getResponseBody().getReason());
+            }
 
-            return APIResponse.of(SuccessCode.SELECT_SUCCESS, AccountResponseDto.AccountInfo.from(account,data));
+            HaetsalResponseDto.Profile userInfo = profileResponseBody.getData();
+
+            Account account = accountService.validateAccount(userInfo.getAccountNumber());
+
+            return APIResponse.of(SuccessCode.SELECT_SUCCESS, AccountResponseDto.AccountInfo.from(account,userInfo));
 
         }catch (FeignException e){
             return APIResponse.of(ErrorCode.INTERNAL_SERVER_ERROR,

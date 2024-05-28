@@ -5,7 +5,7 @@ import com.eum.bank.common.enums.ErrorCode;
 import com.eum.bank.common.enums.SuccessCode;
 import com.eum.bank.repository.AccountRepository;
 import com.eum.bank.timeBank.client.HaetsalClient;
-import com.eum.bank.timeBank.client.HaetsalProfileResponse;
+import com.eum.bank.timeBank.client.HaetsalResponseDto;
 import com.eum.bank.timeBank.controller.dto.request.QRRequestDto;
 import com.eum.bank.timeBank.controller.dto.response.QRResponseDto;
 import lombok.RequiredArgsConstructor;
@@ -84,7 +84,17 @@ public class QRService {
                 return APIResponse.of(ErrorCode.INVALID_QR_CODE, "유효시간이 지난 QR 코드 입니다.");
             }
 
-            HaetsalProfileResponse.Data userInfo = haetsalClient.getProfile(ReceiverUserId).getData();
+            HaetsalResponseDto. ProfileResponseBody profileResponseBody = haetsalClient.getProfile(ReceiverUserId);
+            boolean isSuccess = profileResponseBody.getResponseBody().getCode().startsWith("2");
+            if(!isSuccess){
+                log.error("Cannot get profile from Haetsal-Service: " +
+                                "\nresultMsg: {}, reason: {}" +
+                                "\nError Caused by userId: {}",
+                        profileResponseBody.getResponseBody().getDetailMsg(), profileResponseBody.getResponseBody().getReason(), ReceiverUserId);
+                return APIResponse.of(ErrorCode.INTERNAL_SERVER_ERROR, profileResponseBody.getResponseBody().getDetailMsg());
+            }
+
+            HaetsalResponseDto. Profile userInfo = profileResponseBody.getData();
 
             Long senderBalance= accountRepository.findByAccountNumber(dto.getSenderAccountId()).get().getAvailableBudget();
 

@@ -1,7 +1,7 @@
 package com.eum.bank.timeBank.controller.dto.response;
 
 import com.eum.bank.domain.account.entity.Account;
-import com.eum.bank.timeBank.client.HaetsalProfileResponse;
+import com.eum.bank.timeBank.client.HaetsalResponseDto;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -16,7 +16,7 @@ public class AccountResponseDto {
         private Long availableBudget;
         private Boolean isBlocked;
 
-        public static AccountInfo from(Account account, HaetsalProfileResponse.Data data) {
+        public static AccountInfo from(Account account, HaetsalResponseDto.Profile data) {
             return AccountInfo.builder()
                     .nickName(data.getNickName())
                     .accountNumber(account.getAccountNumber())
