@@ -9,6 +9,7 @@ import com.eum.bank.domain.account.entity.AccountTransferHistory;
 import com.eum.bank.repository.AccountRepository;
 import com.eum.bank.repository.AccountTransferHistoryRepository;
 import com.eum.bank.timeBank.client.HaetsalClient;
+import com.eum.bank.timeBank.client.HaetsalRequestDto;
 import com.eum.bank.timeBank.client.HaetsalResponseDto;
 import com.eum.bank.timeBank.domain.TransactionType;
 import com.eum.bank.timeBank.domain.User;
@@ -63,7 +64,9 @@ public class AccountTransferHistoryService {
         List<String> opponentAccountNumbers = transferHistories.stream()
                 .map(history -> history.getOppenentAccount().getAccountNumber())
                 .toList();
-        List<HaetsalResponseDto.UserInfo> userInfos = haetsalClient.getUserInfos(opponentAccountNumbers);
+
+        List<HaetsalResponseDto.UserInfo> userInfos =
+                haetsalClient.getUserInfos(new HaetsalRequestDto.AccountNumberList(opponentAccountNumbers));
 
         log.error("Size mismatch: transferHistories size is {}, but userInfos size is {}" +
                         "\nError caused by userAccountId: {}",
