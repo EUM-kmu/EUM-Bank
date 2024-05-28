@@ -8,6 +8,14 @@ public class HaetsalResponseDto {
 
     @Getter
     @Setter
+    public static class UserInfo {
+        private int userId;
+        private String nickName;
+        private String profileImage;
+    }
+
+    @Getter
+    @Setter
     public static class ProfileResponseBody{
         private ResponseBody responseBody;
         public Profile data;
