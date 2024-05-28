@@ -20,6 +20,9 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.eum.bank.timeBank.domain.TransactionType.RECEIVE;
+import static com.eum.bank.timeBank.domain.TransactionType.SEND;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -53,18 +56,8 @@ public class AccountTransferHistoryService {
             return APIResponse.of(ErrorCode.INVALID_PARAMETER, "존재하지 않는 계좌번호입니다.");
         }
 
-        List<AccountTransferHistory> transferHistories = new ArrayList<>();
-
-        switch (dto.getType()){
-            case ALL:
-                transferHistories = accountTransferHistoryRepository.findByOwnerAccount_AccountNumberOrderByIdDesc(dto.getAccountId());
-                break;
-//            case SEND:
-//                transferHistories = accountTransferHistoryRepository.findBySenderAccount_AccountNumber(dto.getAccountId());
-//                break;
-//            case RECEIVE:
-//                transferHistories = accountTransferHistoryRepository.findByReceiverAccount_AccountNumber(dto.getAccountId());
-        }
+        List<AccountTransferHistory> transferHistories =
+                accountTransferHistoryRepository.findByOwnerAccount_AccountNumberOrderByIdDesc(dto.getAccountId());
 
         List<String> opponentAccountNumbers = transferHistories.stream()
                 .map(history -> history.getOppenentAccount().getAccountNumber())
@@ -82,8 +75,10 @@ public class AccountTransferHistoryService {
             User user = new User(userInfo.getNickName(), userInfo.getProfileImage());
 
             if (history.getTransferAmount() < 0) { // 내가 보낸 경우
+                if(dto.getType() == RECEIVE)   continue;
                 list.add(TransactionHistoryResponseDto.RemittanceList.receiverInfoFrom(history, user));
             } else { // 내가 받은 경우
+                if(dto.getType() == SEND)   continue;
                 list.add(TransactionHistoryResponseDto.RemittanceList.senderInfoFrom(history, user));
             }
         }
