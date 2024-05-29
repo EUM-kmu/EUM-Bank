@@ -85,13 +85,13 @@ public class QRService {
             }
 
             HaetsalResponseDto. ProfileResponseBody profileResponseBody = haetsalClient.getProfile(ReceiverUserId);
-            boolean isSuccess = profileResponseBody.getResponseBody().getCode().startsWith("2");
+            boolean isSuccess = profileResponseBody.getCode().startsWith("2");
             if(!isSuccess){
                 log.error("Cannot get profile from Haetsal-Service: " +
                                 "\nresultMsg: {}, reason: {}" +
                                 "\nError Caused by userId: {}",
-                        profileResponseBody.getResponseBody().getDetailMsg(), profileResponseBody.getResponseBody().getReason(), ReceiverUserId);
-                return APIResponse.of(ErrorCode.INTERNAL_SERVER_ERROR, profileResponseBody.getResponseBody().getDetailMsg());
+                        profileResponseBody.getDetailMsg(), profileResponseBody.getReason(), ReceiverUserId);
+                return APIResponse.of(ErrorCode.INTERNAL_SERVER_ERROR, profileResponseBody.getDetailMsg());
             }
 
             HaetsalResponseDto. Profile userInfo = profileResponseBody.getData();

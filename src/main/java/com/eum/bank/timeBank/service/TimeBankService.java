@@ -28,15 +28,15 @@ public class TimeBankService {
 
         try {
             HaetsalResponseDto. ProfileResponseBody profileResponseBody = haetsalClient.getProfile(userId);
-            boolean isSuccess = profileResponseBody.getResponseBody().getCode().startsWith("2");
+            boolean isSuccess = profileResponseBody.getCode().startsWith("2");
             if(!isSuccess){
                 log.error("Cannot get profile from Haetsal-Service: " +
                         "\nresultMsg: {}, reason: {}" +
                         "\nError Caused by userId: {}",
-                        profileResponseBody.getResponseBody().getDetailMsg(), profileResponseBody.getResponseBody().getReason(), userId);
+                        profileResponseBody.getDetailMsg(), profileResponseBody.getReason(), userId);
                 return APIResponse.of(ErrorCode.INTERNAL_SERVER_ERROR,
-                        "resultMsg: " + profileResponseBody.getResponseBody().getDetailMsg() +
-                        ", reason: " + profileResponseBody.getResponseBody().getReason());
+                        "resultMsg: " + profileResponseBody.getDetailMsg() +
+                        ", reason: " + profileResponseBody.getReason());
             }
 
             HaetsalResponseDto.Profile userInfo = profileResponseBody.getData();
