@@ -14,7 +14,7 @@ server:
 
 spring:
   profiles:
-    active: local
+    active: prod
   application:
     name: EUM-BANK
   jackson:
