@@ -4,3 +4,9 @@ spring:
     username: ${BANK_LOCAL_DB_USERNAME}
     password: ${BANK_LOCAL_DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
