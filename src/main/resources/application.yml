@@ -1,0 +1,41 @@
+# 환경변수
+app:
+  qr:
+    key: ${QR_KEY}
+    algorithm: ${QR_ALGORITHM}
+  remittance:
+     key: ${REMIT_KEY}
+     algorithm: ${REMIT_ALGORITHM}
+
+haetsal-url: ${HAETSAL_URL}
+
+server:
+  port: 8080
+
+spring:
+  profiles:
+    active: prod
+  application:
+    name: EUM-BANK
+  jackson:
+    time-zone: Asia/Seoul
+  jpa:
+    database: mysql
+    ddl-auto: update
+    generate-ddl: false
+    properties:
+      hibernate:
+        enable_lazy_load_no_trans: true
+    hibernate:
+      naming:
+        strategy: org.hibernate.cfg.ImprovedNamingStrategy
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: ${EUREKA_SERVICE_URL}
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
