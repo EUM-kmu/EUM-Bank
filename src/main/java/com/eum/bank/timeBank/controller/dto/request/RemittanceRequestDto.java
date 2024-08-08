@@ -1,6 +1,6 @@
 package com.eum.bank.timeBank.controller.dto.request;
 
-import com.eum.bank.timeBank.domain.TransactionType;
+import com.eum.bank.validator.ValidMessageOfHMAC;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Builder;
@@ -19,6 +19,7 @@ public class RemittanceRequestDto {
 
         @Schema(description = "원본 데이터", example = "<accountNumber>%<password>%<amount>%<receiverAccountNumber>")
         @NotEmpty
+        @ValidMessageOfHMAC(field = 4)
         private String remittanceInfo;
 
     }
@@ -30,6 +31,10 @@ public class RemittanceRequestDto {
         @Schema(description = "계좌 id", example = "123456789012")
         @NotEmpty
         private String accountId;
+
+        private void setAccountId(String accountId){
+            this.accountId = (accountId != null) ? accountId.trim() : null;
+        }
 
     }
 

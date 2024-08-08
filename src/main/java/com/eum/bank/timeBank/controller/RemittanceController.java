@@ -14,6 +14,7 @@ import com.eum.bank.timeBank.service.ValidateService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -38,7 +39,7 @@ public class RemittanceController {
     public ResponseEntity<APIResponse<TotalTransferHistoryResponseDTO.GetTotalTransferHistory>> QRRemittance(
             @Schema(description = "송금 요청", required = true)
             @RequestHeader String userId,
-            @RequestBody RemittanceRequestDto.QRRemittance dto
+            @RequestBody @Valid RemittanceRequestDto.QRRemittance dto
     ) throws NoSuchAlgorithmException, InvalidKeyException {
 
         boolean isValid = validateService.hmacRemittance(dto);
@@ -64,7 +65,7 @@ public class RemittanceController {
                     "\n보낸 거래만 보기: SEND, 받은 거래만 보기: RECEIVE  " +
                     "\n아무것도 입력하지 않으면 전체 리스트를 반환합니다.")
             @RequestParam(value = "type", required = false) TransactionType type,
-            @RequestBody RemittanceRequestDto.History dto
+            @RequestBody @Valid RemittanceRequestDto.History dto
     ) {
 
         return ResponseEntity.ok(accountTransferHistoryService.getUserHistory(type, dto));
