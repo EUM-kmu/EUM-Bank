@@ -1,5 +1,6 @@
 package com.eum.bank.timeBank.controller.dto.request;
 
+import com.eum.bank.validator.ValidMessageOfHMAC;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
@@ -17,6 +18,7 @@ public class QRRequestDto {
 
         @Schema(description = "송금 받을 유저 정보", example = "<userId>%<accountId>%<createdAt>")
         @NotEmpty
+        @ValidMessageOfHMAC(field = 3)
         private String userInfo;
 
         @Schema(description = "송금 보낼 유저id", example = "123456789012")
