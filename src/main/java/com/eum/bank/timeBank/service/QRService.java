@@ -3,6 +3,7 @@ package com.eum.bank.timeBank.service;
 import com.eum.bank.common.APIResponse;
 import com.eum.bank.common.enums.ErrorCode;
 import com.eum.bank.common.enums.SuccessCode;
+import com.eum.bank.exception.InvalidQRExceptionHandler;
 import com.eum.bank.repository.AccountRepository;
 import com.eum.bank.timeBank.client.HaetsalClient;
 import com.eum.bank.timeBank.client.HaetsalResponseDto;
@@ -81,7 +82,7 @@ public class QRService {
             String createdAt = parts[2];
 
             if(!isValid(createdAt)){
-                return APIResponse.of(ErrorCode.INVALID_QR_CODE, "유효시간이 지난 QR 코드 입니다.");
+                throw new InvalidQRExceptionHandler("유효시간이 지난 QR 코드 입니다.");
             }
 
             HaetsalResponseDto. ProfileResponseBody profileResponseBody = haetsalClient.getProfile(ReceiverUserId);
@@ -103,7 +104,7 @@ public class QRService {
             return APIResponse.of(SuccessCode.SELECT_SUCCESS, response);
 
         } else {
-            return APIResponse.of(ErrorCode.INVALID_QR_CODE, "QR 코드 인증에 실패했습니다.");
+            throw new InvalidQRExceptionHandler("QR 코드 인증에 실패했습니다");
         }
     }
 

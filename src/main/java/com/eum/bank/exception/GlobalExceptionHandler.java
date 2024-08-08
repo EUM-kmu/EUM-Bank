@@ -243,6 +243,19 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
 
+    /**
+     * 올바르지 않은 QR 정보
+     * 유효시간이 지나거나 검증에 실패 시 사용된다.
+     * @param ex InvalidQRExceptionHandler
+     * @return ResponseEntity<ErrorResponse>
+     */
+    @ExceptionHandler(InvalidQRExceptionHandler.class)
+    protected ResponseEntity<ErrorResponse> InvalidQRException(InvalidQRExceptionHandler ex){
+        log.error("InvalidQRException. 올바르지 않은 QR 정보입니다.", ex);
+        final ErrorResponse response = ErrorResponse.of(ErrorCode.INVALID_QR_CODE, ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
     // ==================================================================================================================
 
     /**
