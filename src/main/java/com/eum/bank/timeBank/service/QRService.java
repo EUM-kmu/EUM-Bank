@@ -1,7 +1,6 @@
 package com.eum.bank.timeBank.service;
 
 import com.eum.bank.common.APIResponse;
-import com.eum.bank.common.enums.ErrorCode;
 import com.eum.bank.common.enums.SuccessCode;
 import com.eum.bank.exception.InvalidQRExceptionHandler;
 import com.eum.bank.repository.AccountRepository;
@@ -9,6 +8,7 @@ import com.eum.bank.timeBank.client.HaetsalClient;
 import com.eum.bank.timeBank.client.HaetsalResponseDto;
 import com.eum.bank.timeBank.controller.dto.request.QRRequestDto;
 import com.eum.bank.timeBank.controller.dto.response.QRResponseDto;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.buf.HexUtils;
@@ -65,7 +65,8 @@ public class QRService {
 
     }
 
-    public APIResponse scanQRCode(QRRequestDto.QRCodeWithSenderInfo dto) throws Exception {
+    // TODO: GlobalExceptionHandler 에 NoSuchAlgorithmException, InvalidKeyException 도 추가하기
+    public APIResponse<QRResponseDto.ScannedData> scanQRCode(QRRequestDto.QRCodeWithSenderInfo dto) throws NoSuchAlgorithmException, InvalidKeyException, FeignException {
 
         SecretKey secretKey = new SecretKeySpec(SECRET_KEY.getBytes(StandardCharsets.UTF_8), ALGORITHM);
         Mac hasher = Mac.getInstance(ALGORITHM);
@@ -85,17 +86,7 @@ public class QRService {
                 throw new InvalidQRExceptionHandler("유효시간이 지난 QR 코드 입니다.");
             }
 
-            HaetsalResponseDto. ProfileResponseBody profileResponseBody = haetsalClient.getProfile(ReceiverUserId);
-            boolean isSuccess = profileResponseBody.getCode().startsWith("2");
-            if(!isSuccess){
-                log.error("Cannot get profile from Haetsal-Service: " +
-                                "\nresultMsg: {}, reason: {}" +
-                                "\nError Caused by userId: {}",
-                        profileResponseBody.getDetailMsg(), profileResponseBody.getReason(), ReceiverUserId);
-                return APIResponse.of(ErrorCode.INTERNAL_SERVER_ERROR, profileResponseBody.getDetailMsg());
-            }
-
-            HaetsalResponseDto. Profile userInfo = profileResponseBody.getData();
+            HaetsalResponseDto. Profile userInfo = haetsalClient.getProfile(ReceiverUserId).getData();
 
             Long senderBalance= accountRepository.findByAccountNumber(dto.getSenderAccountId()).get().getAvailableBudget();
 

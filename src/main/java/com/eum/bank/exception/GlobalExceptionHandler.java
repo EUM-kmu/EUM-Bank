@@ -5,6 +5,8 @@ import com.eum.bank.common.enums.ErrorCode;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import feign.FeignException;
+import feign.Util;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,7 @@ import org.springframework.web.servlet.NoHandlerFoundException;
 
 
 import java.io.IOException;
+import java.util.Iterator;
 
 @RestControllerAdvice
 @Slf4j
@@ -193,6 +196,52 @@ public class GlobalExceptionHandler {
         log.error("IllegalArgumentException", ex);
         final ErrorResponse response = ErrorResponse.of(ErrorCode.INVALID_PARAMETER, ex.getMessage());
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * 다른 MSA 내 서비스와의 소통에서 오류가 발생한 경우. (현재 API 통신하는 서비스: 햇살 서비스)
+     * HttpStatus 가 2xx 이 아닌 경우 FeignException 이 발생한다.
+     *
+     * @param ex FeignException
+     * @return ResponseEntity<ErrorResponse>
+     */
+    @ExceptionHandler(FeignException.class)
+    protected ResponseEntity<ErrorResponse> feignException(FeignException ex) {
+
+        /*
+        API 호출 시 전송한 값을 추출하는 메서드.
+        @param ex에서 ex.request 인 Request 객체의 toString() 내용을 공식 문서에서 일부 추출.
+         */
+        StringBuilder builder = new StringBuilder();
+        Iterator var2 = ex.request().headers().keySet().iterator();
+
+        while(var2.hasNext()) {
+            String field = (String)var2.next();
+            Iterator var4 = Util.valuesOrEmpty(ex.request().headers(), field).iterator();
+
+            while(var4.hasNext()) {
+                String value = (String)var4.next();
+                builder.append(field).append(": ").append(value).append('\n');
+            }
+        }
+
+        /*
+        // TODO: Body 내용을 String화
+        if (ex.request().body() != null) {
+            builder.append('\n').append(Arrays.toString(ex.request().body()));
+            log.error("리퀘스트 바디 널아님");
+        }else{
+            log.error("리퀘스트 바디 널임");
+        }
+         */
+
+        String header = builder.toString();
+        log.error("feignException 발생.\n오류 메시지: {},\n입력값: {}", ex.getMessage(), header);
+
+        String reasonFromHaetsal = ex.getMessage().split("reason\":\"")[1].split("\"}]")[0];
+        final ErrorResponse response = ErrorResponse.of(ErrorCode.INTERNAL_SERVER_ERROR,
+                String.format("햇살 서비스와의 통신에 문제가 있습니다. 이유: %s", reasonFromHaetsal));
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     /**

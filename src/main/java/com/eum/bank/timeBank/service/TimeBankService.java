@@ -24,31 +24,14 @@ public class TimeBankService {
     private final HaetsalClient haetsalClient;
     private final AccountService accountService;
 
-    public APIResponse<AccountResponseDTO.AccountInfo> currentAccount(String userId) {
+    public APIResponse<AccountResponseDTO.AccountInfo> currentAccount(String userId) throws FeignException {
 
-        try {
-            HaetsalResponseDto. ProfileResponseBody profileResponseBody = haetsalClient.getProfile(userId);
-            boolean isSuccess = profileResponseBody.getCode().startsWith("2");
-            if(!isSuccess){
-                log.error("Cannot get profile from Haetsal-Service: " +
-                        "\nresultMsg: {}, reason: {}" +
-                        "\nError Caused by userId: {}",
-                        profileResponseBody.getDetailMsg(), profileResponseBody.getReason(), userId);
-                return APIResponse.of(ErrorCode.INTERNAL_SERVER_ERROR,
-                        "resultMsg: " + profileResponseBody.getDetailMsg() +
-                        ", reason: " + profileResponseBody.getReason());
-            }
+        HaetsalResponseDto.Profile userInfo = haetsalClient.getProfile(userId).getData();
 
-            HaetsalResponseDto.Profile userInfo = profileResponseBody.getData();
+        Account account = accountService.validateAccount(userInfo.getAccountNumber());
 
-            Account account = accountService.validateAccount(userInfo.getAccountNumber());
+        return APIResponse.of(SuccessCode.SELECT_SUCCESS, AccountResponseDto.AccountInfo.from(account,userInfo));
 
-            return APIResponse.of(SuccessCode.SELECT_SUCCESS, AccountResponseDto.AccountInfo.from(account,userInfo));
-
-        }catch (FeignException e){
-            return APIResponse.of(ErrorCode.INTERNAL_SERVER_ERROR,
-                    "채팅 외부 서비스(햇살 서버의 /profile)를 불러오는 데 실패했습니다:  " + e.getMessage());
-        }
 
     }
 }
