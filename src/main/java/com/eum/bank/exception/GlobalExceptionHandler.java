@@ -244,6 +244,13 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @ExceptionHandler(AccountNotFoundException.class)
+    protected ResponseEntity<ErrorResponse> handleAccountNotFoundException(AccountNotFoundException ex) {
+        log.error("AccountNotFoundException. {}", ex.getMessage());
+        final ErrorResponse response = ErrorResponse.of(ErrorCode.INVALID_PARAMETER, ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
     /**
      * [Exception] block된 계좌일 경우
      * @param ex BlockAccountException

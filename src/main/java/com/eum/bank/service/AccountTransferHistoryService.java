@@ -6,6 +6,7 @@ import com.eum.bank.common.enums.ErrorCode;
 import com.eum.bank.common.enums.SuccessCode;
 import com.eum.bank.domain.account.entity.Account;
 import com.eum.bank.domain.account.entity.AccountTransferHistory;
+import com.eum.bank.exception.AccountNotFoundException;
 import com.eum.bank.repository.AccountRepository;
 import com.eum.bank.repository.AccountTransferHistoryRepository;
 import com.eum.bank.timeBank.client.HaetsalClient;
@@ -52,10 +53,11 @@ public class AccountTransferHistoryService {
         accountTransferHistoryRepository.save(dto.toEntity());
     }
 
-    public APIResponse getUserHistory(TransactionType type, RemittanceRequestDto.History dto) {
+    public APIResponse getUserHistory(TransactionType type, RemittanceRequestDto.History dto)
+            throws AccountNotFoundException {
 
         if(accountRepository.findByAccountNumber(dto.getAccountId()).isEmpty()){
-            return APIResponse.of(ErrorCode.INVALID_PARAMETER, "존재하지 않는 계좌번호입니다.");
+            throw new AccountNotFoundException("존재하지 않는 계좌번호입니다.");
         }
 
         List<AccountTransferHistory> transferHistories =
