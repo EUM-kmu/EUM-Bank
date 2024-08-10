@@ -2,7 +2,8 @@ package com.eum.bank.timeBank.service;
 
 import com.eum.bank.common.APIResponse;
 import com.eum.bank.common.enums.SuccessCode;
-import com.eum.bank.exception.InvalidQRExceptionHandler;
+import com.eum.bank.exception.HmacVerificationFailedException;
+import com.eum.bank.exception.QRCodeExpiredException;
 import com.eum.bank.repository.AccountRepository;
 import com.eum.bank.timeBank.client.HaetsalClient;
 import com.eum.bank.timeBank.client.HaetsalResponseDto;
@@ -66,7 +67,8 @@ public class QRService {
     }
 
     // TODO: GlobalExceptionHandler 에 NoSuchAlgorithmException, InvalidKeyException 도 추가하기
-    public APIResponse<QRResponseDto.ScannedData> scanQRCode(QRRequestDto.QRCodeWithSenderInfo dto) throws NoSuchAlgorithmException, InvalidKeyException, FeignException {
+    public APIResponse<QRResponseDto.ScannedData> scanQRCode(QRRequestDto.QRCodeWithSenderInfo dto)
+            throws NoSuchAlgorithmException, InvalidKeyException, QRCodeExpiredException, FeignException, HmacVerificationFailedException {
 
         SecretKey secretKey = new SecretKeySpec(SECRET_KEY.getBytes(StandardCharsets.UTF_8), ALGORITHM);
         Mac hasher = Mac.getInstance(ALGORITHM);
@@ -83,7 +85,7 @@ public class QRService {
             String createdAt = parts[2];
 
             if(!isValid(createdAt)){
-                throw new InvalidQRExceptionHandler("유효시간이 지난 QR 코드 입니다.");
+                throw new QRCodeExpiredException("유효 시간이 만료된 QR 코드입니다.");
             }
 
             HaetsalResponseDto. Profile userInfo = haetsalClient.getProfile(ReceiverUserId).getData();
@@ -95,7 +97,7 @@ public class QRService {
             return APIResponse.of(SuccessCode.SELECT_SUCCESS, response);
 
         } else {
-            throw new InvalidQRExceptionHandler("QR 코드 인증에 실패했습니다");
+            throw new HmacVerificationFailedException("HMAC 검증에 실패했습니다.");
         }
     }
 

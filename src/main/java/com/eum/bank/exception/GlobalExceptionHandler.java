@@ -293,16 +293,23 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 올바르지 않은 QR 정보
-     * 유효시간이 지나거나 검증에 실패 시 사용된다.
-     * @param ex InvalidQRExceptionHandler
+     * HMAC 해싱 값이 서명 값과 다를 경우.
+     *
+     * @param ex HmacVerificationFailedException
      * @return ResponseEntity<ErrorResponse>
      */
-    @ExceptionHandler(InvalidQRExceptionHandler.class)
-    protected ResponseEntity<ErrorResponse> InvalidQRException(InvalidQRExceptionHandler ex){
-        log.error("InvalidQRException. 올바르지 않은 QR 정보입니다.", ex);
-        final ErrorResponse response = ErrorResponse.of(ErrorCode.INVALID_QR_CODE, ex.getMessage());
+    @ExceptionHandler(HmacVerificationFailedException.class)
+    protected ResponseEntity<ErrorResponse> handleHmacVerificationFailedException(HmacVerificationFailedException ex){
+        log.error("HmacVerificationFailedException. {}", ex.getMessage());
+        final ErrorResponse response = ErrorResponse.of(ErrorCode.HMAC_VERIFICATION_FAIL, ex.getMessage());
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(QRCodeExpiredException.class)
+    protected ResponseEntity<ErrorResponse> handleQRCodeExpiredException(QRCodeExpiredException ex){
+        log.error("QRCodeExpiredException. {}", ex.getMessage());
+        final ErrorResponse response = ErrorResponse.of(ErrorCode.Expired_QR_CODE, ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.GONE);
     }
 
     // ==================================================================================================================

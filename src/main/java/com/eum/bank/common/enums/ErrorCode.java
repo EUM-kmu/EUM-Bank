@@ -88,8 +88,11 @@ public enum ErrorCode {
     // 거래의 상태가 유효하지 않음
     INVALID_DEAL_STATUS(400, "G019", "Invalid Transaction Status Exception"),
 
+    // HMAC 검증 실패
+    HMAC_VERIFICATION_FAIL(400, "G020", "HMAC 검증에 실패했습니다."),
+
     // 유효하지 않은 QR code
-    INVALID_QR_CODE(400, "G019", "Invalid QR Code Exception"),
+    Expired_QR_CODE(410, "G021", "유효 시간이 만료된 QR 코드입니다."),
 
     ; // End
 

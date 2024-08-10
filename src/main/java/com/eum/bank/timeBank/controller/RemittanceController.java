@@ -6,6 +6,7 @@ import com.eum.bank.common.dto.response.AccountResponseDTO;
 import com.eum.bank.common.dto.response.TotalTransferHistoryResponseDTO;
 import com.eum.bank.common.enums.ErrorCode;
 import com.eum.bank.common.enums.SuccessCode;
+import com.eum.bank.exception.HmacVerificationFailedException;
 import com.eum.bank.service.AccountService;
 import com.eum.bank.service.AccountTransferHistoryService;
 import com.eum.bank.timeBank.controller.dto.request.RemittanceRequestDto;
@@ -40,12 +41,12 @@ public class RemittanceController {
             @Schema(description = "송금 요청", required = true)
             @RequestHeader String userId,
             @RequestBody @Valid RemittanceRequestDto.QRRemittance dto
-    ) throws NoSuchAlgorithmException, InvalidKeyException {
+    ) throws NoSuchAlgorithmException, InvalidKeyException, HmacVerificationFailedException {
 
         boolean isValid = validateService.hmacRemittance(dto);
 
         if(!isValid){
-            return ResponseEntity.ok(APIResponse.of(ErrorCode.INVALID_DEAL_STATUS, "인증되지 않은 송금 요청입니다."));
+            throw new HmacVerificationFailedException("HMAC 검증에 실패했습니다. 인증되지 않은 송금 요청입니다.");
         }
 
         AccountRequestDTO.Transfer transfer = AccountRequestDTO.Transfer.fromHMAC(dto.getRemittanceInfo());
