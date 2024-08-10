@@ -68,9 +68,11 @@ public class AccountTransferHistoryService {
         List<HaetsalResponseDto.UserInfo> userInfos =
                 haetsalClient.getUserInfos(new HaetsalRequestDto.AccountNumberList(opponentAccountNumbers));
 
-        log.error("Size mismatch: transferHistories size is {}, but userInfos size is {}" +
-                        "\nError caused by userAccountId: {}",
-                transferHistories.size(), userInfos.size(), dto.getAccountId());
+        if(transferHistories.size() != userInfos.size()) {
+            log.error("Size mismatch: transferHistories size is {}, but userInfos size is {}" +
+                            "\nError caused by userAccountId: {}",
+                    transferHistories.size(), userInfos.size(), dto.getAccountId());
+        }
 
         List<TransactionHistoryResponseDto.RemittanceList> list = new ArrayList<>();
         for (int i = 0; i < transferHistories.size(); i++) {
