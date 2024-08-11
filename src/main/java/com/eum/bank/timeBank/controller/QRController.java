@@ -41,11 +41,12 @@ public class QRController {
 
     @Operation(summary = "QR 스캔", description = "QR 코드에서 정보를 추출합니다.")
     @PostMapping("/scan")
-    public ResponseEntity<APIResponse> scanQRCode(
+    public ResponseEntity<APIResponse<QRResponseDto.ScannedData>> scanQRCode(
             @RequestBody @Valid QRRequestDto.QRCodeWithSenderInfo dto
-    ) throws Exception {
+    ) throws NoSuchAlgorithmException, InvalidKeyException {
 
-        APIResponse response = qrService.scanQRCode(dto);
+        // TODO: 서비스 레이어에서 비즈니스 로직만 처리하고, 컨트롤러에서 API 응답을 구성하도록 책임 분리하기.
+        APIResponse<QRResponseDto.ScannedData> response = qrService.scanQRCode(dto);
 
         return ResponseEntity.ok(response);
     }

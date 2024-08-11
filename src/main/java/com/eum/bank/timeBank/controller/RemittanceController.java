@@ -6,9 +6,11 @@ import com.eum.bank.common.dto.response.AccountResponseDTO;
 import com.eum.bank.common.dto.response.TotalTransferHistoryResponseDTO;
 import com.eum.bank.common.enums.ErrorCode;
 import com.eum.bank.common.enums.SuccessCode;
+import com.eum.bank.exception.HmacVerificationFailedException;
 import com.eum.bank.service.AccountService;
 import com.eum.bank.service.AccountTransferHistoryService;
 import com.eum.bank.timeBank.controller.dto.request.RemittanceRequestDto;
+import com.eum.bank.timeBank.controller.dto.response.TransactionHistoryResponseDto;
 import com.eum.bank.timeBank.domain.TransactionType;
 import com.eum.bank.timeBank.service.ValidateService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
@@ -45,7 +48,7 @@ public class RemittanceController {
         boolean isValid = validateService.hmacRemittance(dto);
 
         if(!isValid){
-            return ResponseEntity.ok(APIResponse.of(ErrorCode.INVALID_DEAL_STATUS, "인증되지 않은 송금 요청입니다."));
+            throw new HmacVerificationFailedException("HMAC 검증에 실패했습니다. 인증되지 않은 송금 요청입니다.");
         }
 
         AccountRequestDTO.Transfer transfer = AccountRequestDTO.Transfer.fromHMAC(dto.getRemittanceInfo());
@@ -60,7 +63,7 @@ public class RemittanceController {
     // 특정 계좌의 거래 내역 확인
     @Operation(summary = "특정 계좌의 거래 내역 확인", description = "거래 내역을 확인합니다.")
     @PostMapping("/history")
-    public ResponseEntity<APIResponse> getHistory(
+    public ResponseEntity<APIResponse<List<TransactionHistoryResponseDto.RemittanceList>>> getHistory(
             @Schema(description = "보낸 거래/받은 거래만 보기용 필터.  " +
                     "\n보낸 거래만 보기: SEND, 받은 거래만 보기: RECEIVE  " +
                     "\n아무것도 입력하지 않으면 전체 리스트를 반환합니다.")
