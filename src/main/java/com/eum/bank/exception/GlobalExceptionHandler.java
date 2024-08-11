@@ -5,6 +5,8 @@ import com.eum.bank.common.enums.ErrorCode;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import feign.FeignException;
+import feign.Util;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,8 +22,12 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+
 
 import java.io.IOException;
+import java.util.Iterator;
 
 @RestControllerAdvice
 @Slf4j
@@ -196,6 +202,86 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * [Checked Exception] Cipher 객체가 지원하지 않는 알고리즘 / null / empty / 부정확한 포맷일 경우.
+     *
+     * @param ex NoSuchAlgorithmException
+     * @return ResponseEntity<ErrorResponse>
+     */
+    @ExceptionHandler(NoSuchAlgorithmException.class)
+    protected ResponseEntity<ErrorResponse> handleNoSuchAlgorithmException(NoSuchAlgorithmException ex){
+        log.error("NoSuchAlgorithmException", ex);
+        final ErrorResponse response = ErrorResponse.of(ErrorCode.INVALID_ALGORITHM, ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    /**
+     * [Checked Exception] 요구하지 않은 키 유형 / 키 길이 / null 인 경우.
+     *
+     * @param ex InvalidKeyException
+     * @return ResponseEntity<ErrorResponse>
+     */
+    @ExceptionHandler(InvalidKeyException.class)
+    protected ResponseEntity<ErrorResponse> handleInvalidKeyException(InvalidKeyException ex){
+        log.error("InvalidKeyException", ex);
+        final ErrorResponse response = ErrorResponse.of(ErrorCode.INVALID_KEY, ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+
+    /**
+     * 다른 MSA 내 서비스와의 소통에서 오류가 발생한 경우. (현재 API 통신하는 서비스: 햇살 서비스)
+     * HttpStatus 가 2xx 이 아닌 경우 FeignException 이 발생한다.
+     *
+     * @param ex FeignException
+     * @return ResponseEntity<ErrorResponse>
+     */
+    @ExceptionHandler(FeignException.class)
+    protected ResponseEntity<ErrorResponse> feignException(FeignException ex) {
+
+        /*
+        API 호출 시 전송한 값을 추출하는 메서드.
+        @param ex에서 ex.request 인 Request 객체의 toString() 내용을 공식 문서에서 일부 추출.
+         */
+        StringBuilder builder = new StringBuilder();
+        Iterator var2 = ex.request().headers().keySet().iterator();
+
+        while(var2.hasNext()) {
+            String field = (String)var2.next();
+            Iterator var4 = Util.valuesOrEmpty(ex.request().headers(), field).iterator();
+
+            while(var4.hasNext()) {
+                String value = (String)var4.next();
+                builder.append(field).append(": ").append(value).append('\n');
+            }
+        }
+
+        /*
+        // TODO: Body 내용을 String화
+        if (ex.request().body() != null) {
+            builder.append('\n').append(Arrays.toString(ex.request().body()));
+            log.error("리퀘스트 바디 널아님");
+        }else{
+            log.error("리퀘스트 바디 널임");
+        }
+         */
+
+        String header = builder.toString();
+        log.error("feignException 발생.\n오류 메시지: {},\n입력값: {}", ex.getMessage(), header);
+
+        String reasonFromHaetsal = ex.getMessage().split("reason\":\"")[1].split("\"}]")[0];
+        final ErrorResponse response = ErrorResponse.of(ErrorCode.INTERNAL_SERVER_ERROR,
+                String.format("햇살 서비스와의 통신에 문제가 있습니다. 이유: %s", reasonFromHaetsal));
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(AccountNotFoundException.class)
+    protected ResponseEntity<ErrorResponse> handleAccountNotFoundException(AccountNotFoundException ex) {
+        log.error("AccountNotFoundException. {}", ex.getMessage());
+        final ErrorResponse response = ErrorResponse.of(ErrorCode.INVALID_PARAMETER, ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
      * [Exception] block된 계좌일 경우
      * @param ex BlockAccountException
      * @return ResponseEntity<ErrorResponse>
@@ -241,6 +327,26 @@ public class GlobalExceptionHandler {
         log.error("InvalidDealStatusException", ex);
         final ErrorResponse response = ErrorResponse.of(ErrorCode.INVALID_DEAL_STATUS, ex.getMessage());
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    }
+
+    /**
+     * HMAC 해싱 값이 서명 값과 다를 경우.
+     *
+     * @param ex HmacVerificationFailedException
+     * @return ResponseEntity<ErrorResponse>
+     */
+    @ExceptionHandler(HmacVerificationFailedException.class)
+    protected ResponseEntity<ErrorResponse> handleHmacVerificationFailedException(HmacVerificationFailedException ex){
+        log.error("HmacVerificationFailedException. {}", ex.getMessage());
+        final ErrorResponse response = ErrorResponse.of(ErrorCode.HMAC_VERIFICATION_FAIL, ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(QRCodeExpiredException.class)
+    protected ResponseEntity<ErrorResponse> handleQRCodeExpiredException(QRCodeExpiredException ex){
+        log.error("QRCodeExpiredException. {}", ex.getMessage());
+        final ErrorResponse response = ErrorResponse.of(ErrorCode.Expired_QR_CODE, ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.GONE);
     }
 
     // ==================================================================================================================

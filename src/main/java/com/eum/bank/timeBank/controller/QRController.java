@@ -7,6 +7,7 @@ import com.eum.bank.timeBank.controller.dto.response.QRResponseDto;
 import com.eum.bank.timeBank.service.QRService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -30,7 +31,7 @@ public class QRController {
     @PostMapping("/create")
     public ResponseEntity<APIResponse<QRResponseDto.QRCode>> createQRCode(
             @RequestHeader String userId,
-            @RequestBody QRRequestDto.BaseInfo dto
+            @RequestBody @Valid QRRequestDto.BaseInfo dto
     ) throws NoSuchAlgorithmException, InvalidKeyException {
 
         QRResponseDto.QRCode response = qrService.createQRCode(userId, dto.getAccountId());
@@ -40,11 +41,12 @@ public class QRController {
 
     @Operation(summary = "QR 스캔", description = "QR 코드에서 정보를 추출합니다.")
     @PostMapping("/scan")
-    public ResponseEntity<APIResponse> scanQRCode(
-            @RequestBody QRRequestDto.QRCodeWithSenderInfo dto
-    ) throws Exception {
+    public ResponseEntity<APIResponse<QRResponseDto.ScannedData>> scanQRCode(
+            @RequestBody @Valid QRRequestDto.QRCodeWithSenderInfo dto
+    ) throws NoSuchAlgorithmException, InvalidKeyException {
 
-        APIResponse response = qrService.scanQRCode(dto);
+        // TODO: 서비스 레이어에서 비즈니스 로직만 처리하고, 컨트롤러에서 API 응답을 구성하도록 책임 분리하기.
+        APIResponse<QRResponseDto.ScannedData> response = qrService.scanQRCode(dto);
 
         return ResponseEntity.ok(response);
     }
