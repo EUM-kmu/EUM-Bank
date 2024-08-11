@@ -53,7 +53,7 @@ public class AccountTransferHistoryService {
         accountTransferHistoryRepository.save(dto.toEntity());
     }
 
-    public APIResponse getUserHistory(TransactionType type, RemittanceRequestDto.History dto)
+    public APIResponse<List<TransactionHistoryResponseDto.RemittanceList>> getUserHistory(TransactionType type, RemittanceRequestDto.History dto)
             throws AccountNotFoundException {
 
         if(accountRepository.findByAccountNumber(dto.getAccountId()).isEmpty()){
