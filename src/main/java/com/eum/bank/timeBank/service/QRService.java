@@ -66,7 +66,6 @@ public class QRService {
 
     }
 
-    // TODO: GlobalExceptionHandler 에 NoSuchAlgorithmException, InvalidKeyException 도 추가하기
     public APIResponse<QRResponseDto.ScannedData> scanQRCode(QRRequestDto.QRCodeWithSenderInfo dto)
             throws NoSuchAlgorithmException, InvalidKeyException, QRCodeExpiredException, FeignException, HmacVerificationFailedException {
 

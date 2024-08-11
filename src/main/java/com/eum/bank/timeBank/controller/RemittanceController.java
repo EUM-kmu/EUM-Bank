@@ -10,6 +10,7 @@ import com.eum.bank.exception.HmacVerificationFailedException;
 import com.eum.bank.service.AccountService;
 import com.eum.bank.service.AccountTransferHistoryService;
 import com.eum.bank.timeBank.controller.dto.request.RemittanceRequestDto;
+import com.eum.bank.timeBank.controller.dto.response.TransactionHistoryResponseDto;
 import com.eum.bank.timeBank.domain.TransactionType;
 import com.eum.bank.timeBank.service.ValidateService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
@@ -41,7 +43,7 @@ public class RemittanceController {
             @Schema(description = "송금 요청", required = true)
             @RequestHeader String userId,
             @RequestBody @Valid RemittanceRequestDto.QRRemittance dto
-    ) throws NoSuchAlgorithmException, InvalidKeyException, HmacVerificationFailedException {
+    ) throws NoSuchAlgorithmException, InvalidKeyException {
 
         boolean isValid = validateService.hmacRemittance(dto);
 

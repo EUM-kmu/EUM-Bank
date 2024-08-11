@@ -22,6 +22,9 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -197,6 +200,33 @@ public class GlobalExceptionHandler {
         final ErrorResponse response = ErrorResponse.of(ErrorCode.INVALID_PARAMETER, ex.getMessage());
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
+
+    /**
+     * [Checked Exception] Cipher 객체가 지원하지 않는 알고리즘 / null / empty / 부정확한 포맷일 경우.
+     *
+     * @param ex NoSuchAlgorithmException
+     * @return ResponseEntity<ErrorResponse>
+     */
+    @ExceptionHandler(NoSuchAlgorithmException.class)
+    protected ResponseEntity<ErrorResponse> handleNoSuchAlgorithmException(NoSuchAlgorithmException ex){
+        log.error("NoSuchAlgorithmException", ex);
+        final ErrorResponse response = ErrorResponse.of(ErrorCode.INVALID_ALGORITHM, ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    /**
+     * [Checked Exception] 요구하지 않은 키 유형 / 키 길이 / null 인 경우.
+     *
+     * @param ex InvalidKeyException
+     * @return ResponseEntity<ErrorResponse>
+     */
+    @ExceptionHandler(InvalidKeyException.class)
+    protected ResponseEntity<ErrorResponse> handleInvalidKeyException(InvalidKeyException ex){
+        log.error("InvalidKeyException", ex);
+        final ErrorResponse response = ErrorResponse.of(ErrorCode.INVALID_KEY, ex.getMessage());
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
 
     /**
      * 다른 MSA 내 서비스와의 소통에서 오류가 발생한 경우. (현재 API 통신하는 서비스: 햇살 서비스)
